@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+  <meta charset="UTF-8">
+  <title>Kétkeréken</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+  <!-- iOS stílusú betűtípus -->
+  <link href="https://fonts.cdnfxonts.com/css/sf-pro-display" rel="stylesheet">
+</head>
+<body>
+  <div id="app">
+    <!-- Splash screen -->
+    <div id="splash">
+      <h1>Két keréken</h1>
+    </div>
+
+    <!-- Térkép -->
+    <div id="map"></div>
+    <div id="floating-title">Két keréken</div>
+
+    <!-- Oldalsó menü -->
+    <div id="sidebar" class="open">
+      <button id="close-btn">✕</button>
+      <div class="menu-list">
+        <div class="item">🗺️ Útvonalak</div>
+        <div class="item">📍 Desztinációk</div>
+        <div class="item">🎉 Események</div>
+        <div class="item">🚲 Kölcsönzők</div>
+        <div class="item">👥 Közösség</div>
+        <div class="item">🔧 Szervizek</div>
+        <div class="item">⭐ Kedvencek</div>
+        <div class="item">⚙️ Profil</div>
+        <div class="item">ℹ️ Rólunk</div>
+      </div>
+    </div>
+
+    <!-- Nyitófül -->
+    <div id="reopen-tab" class="hidden">
+      <span>&lt;</span>
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/leaflet-ant-path@1.3.0/dist/leaflet-ant-path.min.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
