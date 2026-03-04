@@ -5,7 +5,6 @@ export default defineConfig({
   plugins: [react()],
   server: {
     proxy: {
-      // ezt a PHP projekted útvonalához igazítsd
       '/api': {
         target: 'http://localhost/ketkerek',
         changeOrigin: true,

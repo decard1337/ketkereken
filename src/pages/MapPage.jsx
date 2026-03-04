@@ -21,13 +21,12 @@ export default function MapPage() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [layerPanelOpen, setLayerPanelOpen] = useState(false);
 
-  const [activePanel, setActivePanel] = useState(null); // "utvonalak" | "destinaciok" | "esemenyek" | "kolcsonzok"
-  const [selected, setSelected] = useState(null); // { type, id }
+  const [activePanel, setActivePanel] = useState(null); 
+  const [selected, setSelected] = useState(null);
 
   const [layerType, setLayerType] = useState("standard");
   const [search, setSearch] = useState("");
 
-  // geolocation state
   const [myPos, setMyPos] = useState(null);
   const [locRequestTick, setLocRequestTick] = useState(0);
 
@@ -61,7 +60,6 @@ export default function MapPage() {
     return () => { cancelled = true; };
   }, []);
 
-  // Keresés: első találatra “ráugrás”
   useEffect(() => {
     const q = search.trim().toLowerCase();
     if (q.length < 2) return;
@@ -83,7 +81,6 @@ export default function MapPage() {
 
     if (!hit) return;
 
-    // kiválasztás
     if (hit._type === "utvonal") setSelected({ type: "utvonal", id: hit.id });
     else if (hit._type === "destinacio") setSelected({ type: "destinacio", id: hit.id });
     else if (hit._type === "esemeny") setSelected({ type: "esemeny", id: hit.id });
@@ -92,7 +89,6 @@ export default function MapPage() {
 
   }, [search, blippek, destinaciok, esemenyek, kolcsonzok, utvonalak]);
 
-  // menüből panel nyitás
   function openPanelByMenu(link) {
     const mapping = {
       utvonalak: "utvonalak",
@@ -108,7 +104,6 @@ export default function MapPage() {
     setSidebarOpen(false);
   }
 
-  // geolocation kérés (gombnyomásra)
   useEffect(() => {
     if (locRequestTick === 0) return;
     if (!navigator.geolocation) return;
@@ -120,7 +115,6 @@ export default function MapPage() {
     );
   }, [locRequestTick]);
 
-  // map “adatok” a MapView-nak: minden marker egyben
   const mapPoints = useMemo(() => {
     const b = blippek.map(x => ({
       id: x.id,
