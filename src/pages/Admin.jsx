@@ -1,10 +1,10 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import { api } from "../lib/api";
-import { MapContainer, TileLayer, Marker, Polyline } from "react-leaflet";
-import L from "leaflet";
-import "../styles/admin.css";
+import { useEffect, useMemo, useRef, useState } from "react"
+import { MapContainer, TileLayer, Marker, Polyline, useMap } from "react-leaflet"
+import L from "leaflet"
+import { api } from "../lib/api"
+import "../styles/admin.css"
 
-const darkTiles = "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png";
+const darkTiles = "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
 
 const RES = [
   { key: "utvonalak", label: "Útvonalak", icon: "fa-route" },
@@ -13,495 +13,461 @@ const RES = [
   { key: "kolcsonzok", label: "Kölcsönzők", icon: "fa-bicycle" },
   { key: "blippek", label: "Blippek", icon: "fa-layer-group" },
   { key: "menu", label: "Menü", icon: "fa-bars" },
-];
+  { key: "users", label: "Users", icon: "fa-user" }
+]
 
 function emptyFor(resource) {
-  if (resource === "utvonalak") return { cim: "", leiras: "", koordinatak: "[]", hossz: "", nehezseg: "konnyu", statusz: "aktiv", idotartam: "", szintkulonbseg: "" };
-  if (resource === "esemenyek") return { nev: "", leiras: "", lat: "", lng: "", datum: "", resztvevok: "", tipus: "esemeny", statusz: "aktiv" };
-  if (resource === "destinaciok") return { nev: "", leiras: "", lat: "", lng: "", ertekeles: "", tipus: "latnivalo", statusz: "aktiv" };
-  if (resource === "kolcsonzok") return { nev: "", cim: "", lat: "", lng: "", ar: "", telefon: "", nyitvatartas: "", statusz: "aktiv" };
-  if (resource === "blippek") return { nev: "", leiras: "", lat: "", lng: "", tipus: "altalanos", ikon: "circle", statusz: "aktiv" };
-  if (resource === "menu") return { nev: "", link: "", statusz: "aktiv", sorrend: "" };
-  return {};
+  if (resource === "utvonalak") return { cim: "", leiras: "", koordinatak: "[]", hossz: "", nehezseg: "konnyu", statusz: "aktiv", idotartam: "", szintkulonbseg: "" }
+  if (resource === "esemenyek") return { nev: "", leiras: "", lat: "", lng: "", datum: "", resztvevok: "", tipus: "esemeny", statusz: "aktiv" }
+  if (resource === "destinaciok") return { nev: "", leiras: "", lat: "", lng: "", ertekeles: "", tipus: "latnivalo", statusz: "aktiv" }
+  if (resource === "kolcsonzok") return { nev: "", cim: "", lat: "", lng: "", ar: "", telefon: "", nyitvatartas: "", statusz: "aktiv" }
+  if (resource === "blippek") return { nev: "", leiras: "", lat: "", lng: "", tipus: "altalanos", ikon: "circle", statusz: "aktiv" }
+  if (resource === "menu") return { nev: "", link: "", statusz: "aktiv", sorrend: "" }
+  if (resource === "users") return { username: "", email: "", role: "user" }
+  return {}
 }
 
-function fmt(n) {
-  const x = Number(n);
-  if (!Number.isFinite(x)) return "0";
-  return x.toLocaleString("hu-HU");
-}
-
-function markerIcon({ bg, fg, fa }) {
+function markerIcon(fa, active) {
   return L.divIcon({
     className: "",
-    html: `<div style="width:28px;height:28px;border-radius:12px;background:${bg};border:1px solid rgba(255,255,255,.18);backdrop-filter:blur(10px);display:flex;align-items:center;justify-content:center;box-shadow:0 16px 36px rgba(0,0,0,.35)"><i class="fa-solid ${fa}" style="font-size:13px;color:${fg}"></i></div>`,
+    html: `<div style="width:28px;height:28px;border-radius:12px;background:${active ? "rgba(0,122,255,.90)" : "rgba(255,255,255,.10)"};border:1px solid ${active ? "rgba(0,122,255,.90)" : "rgba(255,255,255,.16)"};display:flex;align-items:center;justify-content:center;backdrop-filter:blur(10px)"><i class="fa-solid ${fa}" style="color:rgba(255,255,255,.92);font-size:13px"></i></div>`,
     iconSize: [28, 28],
-    iconAnchor: [14, 14],
-  });
+    iconAnchor: [14, 14]
+  })
 }
 
-const iconByType = {
-  blippek: { bg: "rgba(255,255,255,.10)", fg: "rgba(255,255,255,.92)", fa: "fa-layer-group" },
-  esemenyek: { bg: "rgba(126,87,255,.18)", fg: "rgba(255,255,255,.92)", fa: "fa-calendar-days" },
-  destinaciok: { bg: "rgba(0,122,255,.18)", fg: "rgba(255,255,255,.92)", fa: "fa-location-dot" },
-  kolcsonzok: { bg: "rgba(16,185,129,.16)", fg: "rgba(255,255,255,.92)", fa: "fa-bicycle" },
-};
+function parseRouteCoords(v) {
+  try {
+    const arr = JSON.parse(v || "[]")
+    if (!Array.isArray(arr) || arr.length < 2) return null
+    return arr
+  } catch {
+    return null
+  }
+}
+
+function MapAutoResize({ targetRef }) {
+  const map = useMap()
+
+  useEffect(() => {
+    const el = targetRef?.current
+    if (!el) return
+
+    let raf = 0
+
+    const run = () => {
+      cancelAnimationFrame(raf)
+      raf = requestAnimationFrame(() => {
+        map.invalidateSize(true)
+      })
+    }
+
+    run()
+
+    const ro = new ResizeObserver(() => run())
+    ro.observe(el)
+
+    return () => {
+      cancelAnimationFrame(raf)
+      ro.disconnect()
+    }
+  }, [map, targetRef])
+
+  return null
+}
 
 export default function Admin() {
-  const [resource, setResource] = useState("utvonalak");
-  const [items, setItems] = useState([]);
-  const [counts, setCounts] = useState({});
-  const [selectedId, setSelectedId] = useState(null);
-  const [editorOpen, setEditorOpen] = useState(false);
-  const [form, setForm] = useState(emptyFor("utvonalak"));
-  const [err, setErr] = useState("");
-  const [ok, setOk] = useState("");
-  const [query, setQuery] = useState("");
-  const [pendingPick, setPendingPick] = useState(null);
-  const [refs, setRefs] = useState({ blippek: [], esemenyek: [], destinaciok: [], kolcsonzok: [] });
-  const loadSeq = useRef(0);
+  const [resource, setResource] = useState("utvonalak")
+  const [data, setData] = useState({})
+  const [selectedId, setSelectedId] = useState(null)
+  const [form, setForm] = useState(emptyFor("utvonalak"))
+  const [query, setQuery] = useState("")
+  const [editorOpen, setEditorOpen] = useState(false)
+  const [pickMode, setPickMode] = useState(false)
+  const [err, setErr] = useState("")
+  const [ok, setOk] = useState("")
+  const [pendingPick, setPendingPick] = useState(null)
 
-  const resMeta = useMemo(() => RES.find((r) => r.key === resource) || RES[0], [resource]);
-  const titleKey = resource === "utvonalak" ? "cim" : "nev";
-  const hasLatLng = resource !== "utvonalak" && resource !== "menu";
+  const mapRef = useRef(null)
+  const mapWrapRef = useRef(null)
 
-  async function load(resKey = resource) {
-    const seq = ++loadSeq.current;
-    setErr("");
-    setOk("");
-    try {
-      const r = await api.adminList(resKey);
-      if (seq !== loadSeq.current) return;
-      setItems(r);
-      setCounts((p) => ({ ...p, [resKey]: r.length }));
-      if (pendingPick && pendingPick.resource === resKey) {
-        setSelectedId(pendingPick.id);
-        setEditorOpen(true);
-        setPendingPick(null);
-      } else {
-        setSelectedId(null);
-        setForm(emptyFor(resKey));
-        setEditorOpen(false);
-      }
-    } catch (e) {
-      if (seq !== loadSeq.current) return;
-      setErr(e.message);
-    }
+  const resMeta = useMemo(() => RES.find(r => r.key === resource) || RES[0], [resource])
+
+  const titleKey = useMemo(() => {
+    if (resource === "utvonalak") return "cim"
+    if (resource === "users") return "username"
+    return "nev"
+  }, [resource])
+
+  const hasLatLng = useMemo(() => resource !== "utvonalak" && resource !== "menu" && resource !== "users", [resource])
+
+  async function loadOne(key) {
+    const items = await api.adminList(key)
+    setData(p => ({ ...p, [key]: items }))
+    return items
   }
 
-  async function refreshAllCounts() {
-    try {
-      const keys = RES.map((r) => r.key);
-      const results = await Promise.allSettled(keys.map((k) => api.adminList(k)));
-      const next = {};
-      keys.forEach((k, i) => {
-        const r = results[i];
-        next[k] = r.status === "fulfilled" ? (Array.isArray(r.value) ? r.value.length : 0) : 0;
-      });
-      setCounts(next);
-    } catch {
-      setCounts({});
-    }
+  async function loadAll() {
+    const keys = RES.map(r => r.key)
+    const results = await Promise.allSettled(keys.map(k => api.adminList(k)))
+    const out = {}
+    keys.forEach((k, i) => {
+      out[k] = results[i].status === "fulfilled" ? (results[i].value || []) : []
+    })
+    setData(out)
   }
 
-  async function refreshRefs() {
-    try {
-      const [b, e, d, k] = await Promise.all([
-        api.adminList("blippek"),
-        api.adminList("esemenyek"),
-        api.adminList("destinaciok"),
-        api.adminList("kolcsonzok"),
-      ]);
-      setRefs({
-        blippek: Array.isArray(b) ? b : [],
-        esemenyek: Array.isArray(e) ? e : [],
-        destinaciok: Array.isArray(d) ? d : [],
-        kolcsonzok: Array.isArray(k) ? k : [],
-      });
-    } catch {
-      setRefs({ blippek: [], esemenyek: [], destinaciok: [], kolcsonzok: [] });
-    }
-  }
+  useEffect(() => { loadAll() }, [])
 
   useEffect(() => {
-    refreshAllCounts();
-    refreshRefs();
-  }, []);
+    setQuery("")
+    setSelectedId(null)
+    setForm(emptyFor(resource))
+    setEditorOpen(false)
+    setPickMode(false)
+    setErr("")
+    setOk("")
+    loadOne(resource).catch(() => {})
+  }, [resource])
 
-  useEffect(() => {
-    setQuery("");
-    load(resource);
-  }, [resource]);
-
-  const selectedItem = useMemo(
-    () => items.find((x) => String(x.id) === String(selectedId)) || null,
-    [items, selectedId]
-  );
-
-  useEffect(() => {
-    if (!selectedItem) return;
-    setForm({ ...selectedItem });
-  }, [selectedItem]);
-
-  function setField(k, v) {
-    setForm((p) => ({ ...p, [k]: v }));
-  }
+  const listItems = useMemo(() => data[resource] || [], [data, resource])
 
   const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    if (!q) return items;
-    return items.filter((it) => {
-      const a = String(it.id ?? "").toLowerCase();
-      const b = String(it[titleKey] ?? "").toLowerCase();
-      const c = String(it.leiras ?? it.cim ?? "").toLowerCase();
-      return a.includes(q) || b.includes(q) || c.includes(q);
-    });
-  }, [items, query, titleKey]);
+    const q = query.trim().toLowerCase()
+    if (!q) return listItems
+    return listItems.filter(it => {
+      const a = String(it.id ?? "").toLowerCase()
+      const b = String(it[titleKey] ?? "").toLowerCase()
+      const c = String(it.email ?? it.leiras ?? it.cim ?? "").toLowerCase()
+      return a.includes(q) || b.includes(q) || c.includes(q)
+    })
+  }, [listItems, query, titleKey])
 
-  const routeLine = useMemo(() => {
-    if (resource !== "utvonalak") return null;
-    try {
-      const arr = JSON.parse(form.koordinatak || "[]");
-      if (!Array.isArray(arr) || arr.length < 2) return null;
-      return arr;
-    } catch {
-      return null;
-    }
-  }, [resource, form.koordinatak]);
-
-  const mapCenter = useMemo(() => {
-    if (resource === "utvonalak" && routeLine?.length) return routeLine[0];
-    const lat = Number(form.lat);
-    const lng = Number(form.lng);
-    if (Number.isFinite(lat) && Number.isFinite(lng)) return [lat, lng];
-    const any = refs.destinaciok?.[0];
-    if (any && Number.isFinite(Number(any.lat)) && Number.isFinite(Number(any.lng))) return [Number(any.lat), Number(any.lng)];
-    return [47.4979, 19.0402];
-  }, [resource, routeLine, form.lat, form.lng, refs.destinaciok]);
-
-  const mapMarkers = useMemo(() => {
-    const out = [];
-    for (const k of ["blippek", "esemenyek", "destinaciok", "kolcsonzok"]) {
-      const arr = refs[k] || [];
-      for (const x of arr) {
-        const lat = Number(x.lat);
-        const lng = Number(x.lng);
-        if (!Number.isFinite(lat) || !Number.isFinite(lng)) continue;
-        out.push({ resource: k, id: x.id, lat, lng });
+  const allMarkers = useMemo(() => {
+    const out = []
+    for (const r of RES) {
+      const items = data[r.key] || []
+      for (const it of items) {
+        const lat = Number(it.lat)
+        const lng = Number(it.lng)
+        if (!Number.isFinite(lat) || !Number.isFinite(lng)) continue
+        out.push({ resource: r.key, id: it.id, lat, lng })
       }
     }
-    return out;
-  }, [refs]);
+    return out
+  }, [data])
+
+  const allRoutes = useMemo(() => data.utvonalak || [], [data])
+
+  function zoomToItem(resKey, item) {
+    if (!mapRef.current || !item) return
+
+    if (resKey === "utvonalak") {
+      const coords = parseRouteCoords(item.koordinatak)
+      if (!coords) return
+      const b = L.latLngBounds(coords.map(p => L.latLng(p[0], p[1])))
+      mapRef.current.fitBounds(b, { padding: [60, 60], animate: true })
+      return
+    }
+
+    const lat = Number(item.lat)
+    const lng = Number(item.lng)
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) return
+    mapRef.current.flyTo([lat, lng], 15, { animate: true })
+  }
+
+  function openNew() {
+    setSelectedId(null)
+    setForm(emptyFor(resource))
+    setEditorOpen(true)
+    setPickMode(hasLatLng)
+    setErr("")
+    setOk("")
+  }
+
+  function openEdit(resKey, item) {
+    setErr("")
+    setOk("")
+    setPickMode(false)
+    setSelectedId(item?.id ?? null)
+    setForm(item ? { ...item } : emptyFor(resKey))
+    setEditorOpen(true)
+    requestAnimationFrame(() => requestAnimationFrame(() => zoomToItem(resKey, item)))
+  }
+
+  function closeEditor() {
+    setEditorOpen(false)
+    setPickMode(false)
+    setSelectedId(null)
+    setForm(emptyFor(resource))
+    setErr("")
+    setOk("")
+  }
+
+  function setField(k, v) {
+    setForm(p => ({ ...p, [k]: v }))
+  }
 
   async function save() {
-    setErr("");
-    setOk("");
+    setErr("")
+    setOk("")
     try {
       if (selectedId) {
-        const upd = await api.adminUpdate(resource, selectedId, form);
-        setItems((p) => p.map((x) => (String(x.id) === String(selectedId) ? upd : x)));
-        setOk("Mentve");
+        await api.adminUpdate(resource, selectedId, form)
+        setOk("Mentve")
       } else {
-        const created = await api.adminCreate(resource, form);
-        setItems((p) => [...p, created]);
-        setSelectedId(created.id);
-        setEditorOpen(true);
-        setOk("Létrehozva");
+        const created = await api.adminCreate(resource, form)
+        setSelectedId(created.id)
+        setOk("Létrehozva")
       }
-      setCounts((p) => ({ ...p, [resource]: (items.length || 0) + (selectedId ? 0 : 1) }));
-      refreshAllCounts();
-      refreshRefs();
+      await loadOne(resource)
+      await loadAll()
+      setPickMode(false)
     } catch (e) {
-      setErr(e.message);
+      setErr(e.message || "Hiba")
     }
   }
 
   async function del() {
-    if (!selectedId) return;
-    setErr("");
-    setOk("");
+    if (!selectedId) return
+    setErr("")
+    setOk("")
     try {
-      await api.adminDelete(resource, selectedId);
-      setItems((p) => p.filter((x) => String(x.id) !== String(selectedId)));
-      setSelectedId(null);
-      setForm(emptyFor(resource));
-      setEditorOpen(false);
-      setOk("Törölve");
-      refreshAllCounts();
-      refreshRefs();
+      await api.adminDelete(resource, selectedId)
+      setOk("Törölve")
+      setSelectedId(null)
+      setForm(emptyFor(resource))
+      setEditorOpen(false)
+      setPickMode(false)
+      await loadOne(resource)
+      await loadAll()
     } catch (e) {
-      setErr(e.message);
+      setErr(e.message || "Hiba")
     }
   }
 
-  function openNew() {
-    setSelectedId(null);
-    setForm(emptyFor(resource));
-    setErr("");
-    setOk("");
-    setEditorOpen(true);
-  }
-
-  function openEdit(id) {
-    setSelectedId(id);
-    setErr("");
-    setOk("");
-    setEditorOpen(true);
-  }
-
-  function closeEditor() {
-    setEditorOpen(false);
-    setSelectedId(null);
-    setForm(emptyFor(resource));
-    setErr("");
-    setOk("");
-  }
-
-  function onMarkerJump(r, id) {
-    if (r === resource) {
-      setSelectedId(id);
-      setEditorOpen(true);
-      return;
+  function jumpTo(resourceKey, id, lat, lng) {
+    if (resourceKey === resource) {
+      const item = (data[resourceKey] || []).find(x => String(x.id) === String(id))
+      if (item) openEdit(resourceKey, item)
+      else {
+        setSelectedId(id)
+        setEditorOpen(true)
+        if (Number.isFinite(lat) && Number.isFinite(lng) && mapRef.current) {
+          requestAnimationFrame(() => mapRef.current.flyTo([lat, lng], 15, { animate: true }))
+        }
+      }
+      return
     }
-    setPendingPick({ resource: r, id });
-    setResource(r);
+    setPendingPick({ resource: resourceKey, id, lat, lng })
+    setResource(resourceKey)
+  }
+
+  useEffect(() => {
+    if (!pendingPick) return
+    const arr = data[pendingPick.resource] || []
+    const item = arr.find(x => String(x.id) === String(pendingPick.id))
+    if (item) {
+      openEdit(pendingPick.resource, item)
+      setPendingPick(null)
+      return
+    }
+    if (mapRef.current && Number.isFinite(pendingPick.lat) && Number.isFinite(pendingPick.lng)) {
+      requestAnimationFrame(() => mapRef.current.flyTo([pendingPick.lat, pendingPick.lng], 15, { animate: true }))
+      setEditorOpen(true)
+    }
+  }, [data, pendingPick])
+
+  function onMapClick(e) {
+    if (!editorOpen) return
+    if (!hasLatLng) return
+    if (!pickMode) return
+    setField("lat", String(e.latlng.lat))
+    setField("lng", String(e.latlng.lng))
   }
 
   return (
-    <div className="adm">
-      <div className="adm-bg" />
-
-      <div className="adm-shell">
-        <div className="adm-topbar">
-          <div className="adm-brand">
-            <div className="adm-mark">
-              <i className="fa-solid fa-shield-halved" />
-            </div>
-            <div className="adm-brandtext">
-              <div className="adm-title">Admin panel</div>
-              <div className="adm-sub">Kezelés: {resMeta.label}</div>
-            </div>
-          </div>
-
-          <div className="adm-actions">
-            <button className="adm-btn" onClick={() => { load(resource); refreshAllCounts(); refreshRefs(); }}>
-              <i className="fa-solid fa-rotate" />
-              <span>Frissít</span>
-            </button>
-          </div>
+    <div className={"adm2 " + (editorOpen ? "editing" : "")}>
+      <div className={"adm2-sidebar " + (editorOpen ? "hide" : "")}>
+        <div className="adm2-brand">
+          <div className="adm2-logo"><i className="fa-solid fa-shield-halved" /></div>
         </div>
 
-        <div className="adm-main v2">
-          <div className="adm-side">
-            <div className="adm-card">
-              <div className="adm-card-head">
-                <div className="adm-card-title">
-                  <i className="fa-solid fa-sliders" />
-                  <span>Tábla</span>
-                </div>
+        <div className="adm2-nav">
+          {RES.map(r => (
+            <button
+              key={r.key}
+              className={"adm2-navbtn " + (resource === r.key ? "active" : "")}
+              onClick={() => { setPendingPick(null); setResource(r.key) }}
+              title={r.label}
+            >
+              <i className={"fa-solid " + r.icon} />
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className={"adm2-list " + (editorOpen ? "hide" : "")}>
+        <div className="adm2-listhead">
+          <div className="adm2-title">{resMeta.label}</div>
+          <button className="adm2-iconbtn" onClick={openNew} title="Új">
+            <i className="fa-solid fa-plus" />
+          </button>
+        </div>
+
+        <div className="adm2-search">
+          <input
+            className="adm2-input"
+            value={query}
+            onChange={e => setQuery(e.target.value)}
+            placeholder="Keresés..."
+          />
+          <button className="adm2-iconbtn" onClick={() => setQuery("")} title="Törlés">
+            <i className="fa-solid fa-xmark" />
+          </button>
+        </div>
+
+        <div className="adm2-items">
+          {filtered.map(it => (
+            <button
+              key={it.id}
+              className={"adm2-item " + (String(it.id) === String(selectedId) ? "active" : "")}
+              onClick={() => openEdit(resource, it)}
+            >
+              <div className="adm2-itemtitle">
+                {resource === "users" ? (it.username || it.email || `#${it.id}`) : (it[titleKey] ?? `#${it.id}`)}
+              </div>
+              <div className="adm2-itemsub">
+                {resource === "users" ? (it.email || `ID: ${it.id}`) : `ID: ${it.id}`}
+              </div>
+            </button>
+          ))}
+
+          <button className="adm2-item adm2-new" onClick={openNew}>
+            <div className="adm2-itemtitle"><i className="fa-solid fa-plus" style={{ marginRight: 10 }} /> Új hozzáadása</div>
+            <div className="adm2-itemsub">Üres űrlap</div>
+          </button>
+        </div>
+      </div>
+
+      <div className="adm2-mapwrap" ref={mapWrapRef}>
+        <MapContainer
+          center={[47.4979, 19.0402]}
+          zoom={12}
+          zoomControl={false}
+          className="adm2-map"
+          whenCreated={m => {
+            mapRef.current = m
+            m.on("click", onMapClick)
+          }}
+        >
+          <MapAutoResize targetRef={mapWrapRef} />
+          <TileLayer url={darkTiles} />
+
+          {allMarkers.map(m => {
+            const meta = RES.find(r => r.key === m.resource)
+            const fa = meta?.icon || "fa-location-dot"
+            const active = m.resource === resource && String(m.id) === String(selectedId)
+            const draggable = m.resource === resource && editorOpen && hasLatLng && String(m.id) === String(selectedId)
+
+            const item = (data[m.resource] || []).find(x => String(x.id) === String(m.id))
+            if (!item) return null
+
+            return (
+              <Marker
+                key={`${m.resource}-${m.id}`}
+                position={[m.lat, m.lng]}
+                icon={markerIcon(fa, active)}
+                draggable={draggable}
+                eventHandlers={{
+                  click: () => jumpTo(m.resource, m.id, m.lat, m.lng),
+                  dragend: e => {
+                    const ll = e.target.getLatLng()
+                    setField("lat", String(ll.lat))
+                    setField("lng", String(ll.lng))
+                    requestAnimationFrame(() => requestAnimationFrame(() => {
+                      if (mapRef.current) mapRef.current.flyTo([ll.lat, ll.lng], mapRef.current.getZoom(), { animate: true })
+                    }))
+                  }
+                }}
+              />
+            )
+          })}
+
+          {allRoutes.map(r => {
+            const coords = parseRouteCoords(r.koordinatak)
+            if (!coords) return null
+            const active = resource === "utvonalak" && String(r.id) === String(selectedId)
+            return (
+              <Polyline
+                key={`r-${r.id}`}
+                positions={coords}
+                pathOptions={{
+                  weight: active ? 6 : 4,
+                  opacity: active ? 1 : 0.25,
+                  color: active ? "#007aff" : "#6b7280"
+                }}
+              />
+            )
+          })}
+        </MapContainer>
+
+        <div className={"adm2-modal " + (editorOpen ? "open" : "")}>
+          <div className="adm2-modalOverlay" onClick={closeEditor} />
+          <div className="adm2-modalCard">
+            <div className="adm2-editorhead">
+              <div className="adm2-editortitle">
+                {selectedId ? `Szerkesztés #${selectedId}` : "Új elem"}
               </div>
 
-              <div className="adm-nav">
-                {RES.map((r) => (
+              <div className="adm2-editoractions">
+                {hasLatLng && (
                   <button
-                    key={r.key}
-                    className={"adm-navitem " + (resource === r.key ? "active" : "")}
-                    onClick={() => { setPendingPick(null); setResource(r.key); }}
+                    className={"adm2-chip " + (pickMode ? "on" : "")}
+                    onClick={() => setPickMode(p => !p)}
+                    title="Kattints a térképre lat/lng-hez"
                   >
-                    <span className="ani">
-                      <i className={"fa-solid " + r.icon} />
-                    </span>
-                    <span className="ant">{r.label}</span>
-                    <span className="anc">{fmt(counts[r.key] ?? 0)}</span>
+                    <i className="fa-solid fa-location-crosshairs" />
+                    <span>Pick</span>
                   </button>
-                ))}
-              </div>
-            </div>
+                )}
 
-            <div className="adm-card mapmini">
-              <div className="adm-card-head">
-                <div className="adm-card-title">
-                  <i className="fa-solid fa-map" />
-                  <span>Referenciák</span>
-                </div>
-                <div className="adm-badge">{fmt(mapMarkers.length)}</div>
-              </div>
-
-              <div className="adm-mapmini">
-                <MapContainer center={mapCenter} zoom={12} zoomControl={false} style={{ height: "100%", width: "100%" }}>
-                  <TileLayer url={darkTiles} />
-                  {mapMarkers.map((m) => {
-                    const cfg = iconByType[m.resource] || iconByType.blippek;
-                    return (
-                      <Marker
-                        key={`${m.resource}-${m.id}`}
-                        position={[m.lat, m.lng]}
-                        icon={markerIcon(cfg)}
-                        eventHandlers={{ click: () => onMarkerJump(m.resource, m.id) }}
-                      />
-                    );
-                  })}
-                  {routeLine && <Polyline positions={routeLine} pathOptions={{ weight: 5, opacity: 0.9 }} />}
-                </MapContainer>
-              </div>
-            </div>
-          </div>
-
-          <div className={"adm-work " + (editorOpen ? "shift" : "")}>
-            <div className="adm-card listcard">
-              <div className="adm-card-head">
-                <div className="adm-card-title">
-                  <i className="fa-solid fa-list" />
-                  <span>Lista</span>
-                </div>
-                <div className="adm-badge">{fmt(filtered.length)}</div>
-              </div>
-
-              <div className="adm-listtools">
-                <input
-                  className="adm-input"
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                  placeholder="Keresés (ID / név / cím / leírás)"
-                />
-              </div>
-
-              <div className="adm-list">
-                {filtered.map((it) => (
-                  <button
-                    key={it.id}
-                    className={"adm-row " + (String(it.id) === String(selectedId) ? "active" : "")}
-                    onClick={() => openEdit(it.id)}
-                  >
-                    <div className="ar-top">
-                      <div className="ar-title">{it[titleKey] ?? `#${it.id}`}</div>
-                      <div className={"ar-chip " + (String(it.statusz || "").toLowerCase() === "aktiv" ? "on" : "off")}>
-                        {String(it.statusz || "").toLowerCase() === "aktiv" ? "aktív" : "inaktív"}
-                      </div>
-                    </div>
-                    <div className="ar-sub">ID: {it.id}</div>
-                  </button>
-                ))}
-
-                <button className="adm-row newrow" onClick={openNew}>
-                  <div className="ar-top">
-                    <div className="ar-title">
-                      <i className="fa-solid fa-plus" style={{ marginRight: 10 }} />
-                      Új hozzáadása
-                    </div>
-                    <div className="ar-chip on">create</div>
-                  </div>
-                  <div className="ar-sub">Üres űrlap megnyitása</div>
+                <button className="adm2-iconbtn" onClick={closeEditor} title="Bezár">
+                  <i className="fa-solid fa-xmark" />
                 </button>
               </div>
             </div>
 
-            <div className={"adm-card editcard " + (editorOpen ? "open" : "")}>
-              <div className="adm-card-head">
-                <div className="adm-card-title">
-                  <i className="fa-solid fa-pen-to-square" />
-                  <span>{selectedId ? `Szerkesztés #${selectedId}` : "Új elem"}</span>
-                </div>
+            {err && <div className="adm2-msg err">{err}</div>}
+            {ok && <div className="adm2-msg ok">{ok}</div>}
 
-                <div className="adm-head-actions">
-                  <button className="adm-mini" onClick={closeEditor}>
-                    <i className="fa-solid fa-xmark" />
-                  </button>
-                  <button className="adm-btn danger" onClick={del} disabled={!selectedId}>
-                    <i className="fa-solid fa-trash" />
-                    <span>Törlés</span>
-                  </button>
-                  <button className="adm-btn primary" onClick={save}>
-                    <i className="fa-solid fa-floppy-disk" />
-                    <span>Mentés</span>
-                  </button>
-                </div>
-              </div>
+            <div className="adm2-form adm2-formModal">
+              {Object.keys(form).map(k => (
+                <label key={k} className={"adm2-field " + (k === "koordinatak" ? "wide" : "")}>
+                  <div className="adm2-label">{k}</div>
+                  {k === "koordinatak" ? (
+                    <textarea className="adm2-area" value={form[k] ?? ""} onChange={e => setField(k, e.target.value)} rows={7} />
+                  ) : (
+                    <input className="adm2-input2" value={form[k] ?? ""} onChange={e => setField(k, e.target.value)} />
+                  )}
+                </label>
+              ))}
+            </div>
 
-              {err && <div className="adm-msg err">{err}</div>}
-              {ok && <div className="adm-msg ok">{ok}</div>}
-
-              <div className="adm-form v2">
-                {Object.keys(form).map((k) => (
-                  <label key={k} className={"adm-field " + (k === "koordinatak" ? "wide" : "")}>
-                    <div className="adm-label">{k}</div>
-                    {k === "koordinatak" ? (
-                      <textarea className="adm-area" value={form[k] ?? ""} onChange={(e) => setField(k, e.target.value)} rows={7} />
-                    ) : (
-                      <input className="adm-input2" value={form[k] ?? ""} onChange={(e) => setField(k, e.target.value)} />
-                    )}
-                  </label>
-                ))}
-              </div>
-
-              <div className="adm-editmap">
-                <div className="aem-head">
-                  <div className="aem-title">
-                    <i className="fa-solid fa-location-crosshairs" />
-                    <span>Térkép</span>
-                  </div>
-                  <div className="aem-sub">
-                    {hasLatLng ? "kattints a térképre (lat/lng)" : (resource === "utvonalak" ? "útvonal preview" : "nincs pozíció mező")}
-                  </div>
-                </div>
-
-                <div className="aem-map">
-                  <MapContainer
-                    center={mapCenter}
-                    zoom={12}
-                    zoomControl={false}
-                    style={{ height: "100%", width: "100%" }}
-                    whenCreated={(map) => {
-                      map.on("click", (e) => {
-                        if (!hasLatLng) return;
-                        setField("lat", String(e.latlng.lat));
-                        setField("lng", String(e.latlng.lng));
-                      });
-                    }}
-                  >
-                    <TileLayer url={darkTiles} />
-                    {mapMarkers.map((m) => {
-                      const cfg = iconByType[m.resource] || iconByType.blippek;
-                      return (
-                        <Marker
-                          key={`edit-${m.resource}-${m.id}`}
-                          position={[m.lat, m.lng]}
-                          icon={markerIcon(cfg)}
-                          eventHandlers={{ click: () => onMarkerJump(m.resource, m.id) }}
-                        />
-                      );
-                    })}
-                    {hasLatLng && Number(form.lat) && Number(form.lng) && (
-                      <Marker
-                        position={[Number(form.lat), Number(form.lng)]}
-                        icon={markerIcon({ bg: "rgba(16,185,129,.22)", fg: "rgba(255,255,255,.95)", fa: "fa-location-dot" })}
-                      />
-                    )}
-                    {routeLine && <Polyline positions={routeLine} pathOptions={{ weight: 5, opacity: 0.9 }} />}
-                  </MapContainer>
-                </div>
-              </div>
+            <div className="adm2-bottom">
+              <button className="adm2-btn danger" onClick={del} disabled={!selectedId}>
+                <i className="fa-solid fa-trash" />
+                <span>Törlés</span>
+              </button>
+              <button className="adm2-btn primary" onClick={save}>
+                <i className="fa-solid fa-floppy-disk" />
+                <span>Mentés</span>
+              </button>
             </div>
           </div>
         </div>
 
-        <div className="adm-foot">
-          <div className="adm-footcard">
-            <div className="af-ico"><i className="fa-solid fa-circle-info" /></div>
-            <div className="af-text">
-              <div className="af-title">Útvonal</div>
-              <div className="af-sub">Koordináták formátum: [[lat,lng],[lat,lng],...]</div>
-            </div>
-          </div>
-          <div className="adm-footcard">
-            <div className="af-ico"><i className="fa-solid fa-mouse-pointer" /></div>
-            <div className="af-text">
-              <div className="af-title">Marker</div>
-              <div className="af-sub">Kattints markerre: azonnal megnyitja a szerkesztőt</div>
-            </div>
-          </div>
-        </div>
       </div>
     </div>
-  );
+  )
 }

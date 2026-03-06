@@ -1,311 +1,332 @@
-import { Link } from "react-router-dom";
-import "../styles/home.css";
+import { useEffect, useMemo, useState } from "react"
+import { MapContainer, TileLayer, Marker, Polyline } from "react-leaflet"
+import L from "leaflet"
+import { api } from "../lib/api"
+import "../styles/home.css"
 
-const features = [
-  {
-    icon: "fa-solid fa-layer-group",
-    title: "Rétegek",
-    desc: "Kapcsold a kategóriákat, és csak azt látod, ami kell.",
-  },
-  {
-    icon: "fa-solid fa-list",
-    title: "Lista + részletek",
-    desc: "Gyors keresés, kattintás, azonnali paneles infó.",
-  },
-  {
-    icon: "fa-solid fa-location-dot",
-    title: "Pontok",
-    desc: "Pihenők, látnivalók és hasznos helyek egy helyen.",
-  },
-  {
-    icon: "fa-solid fa-route",
-    title: "Útvonalak",
-    desc: "Átlátható útvonalnézet, fókusz a lényegen.",
-  },
-  {
-    icon: "fa-solid fa-magnifying-glass",
-    title: "Szűrés",
-    desc: "Találd meg gyorsan a neked releváns pontokat.",
-  },
-  {
-    icon: "fa-solid fa-bolt",
-    title: "Gyors UI",
-    desc: "Reszponzív, modern felület – nem akad, nem zavar be.",
-  },
-];
+const tiles = "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+
+function parseCoords(v) {
+  try {
+    const arr = JSON.parse(v || "[]")
+    return Array.isArray(arr) ? arr : []
+  } catch {
+    return []
+  }
+}
+
+function pinIcon(kind = "pin") {
+  const bg = kind === "event" ? "rgba(168,85,247,.95)" : kind === "route" ? "rgba(99,102,241,.95)" : "rgba(167,139,250,.95)"
+  const icon = kind === "event" ? "fa-calendar-days" : kind === "route" ? "fa-route" : "fa-location-dot"
+  return L.divIcon({
+    className: "",
+    html: `<div style="width:28px;height:28px;border-radius:12px;background:${bg};border:1px solid rgba(255,255,255,.16);display:flex;align-items:center;justify-content:center;box-shadow:0 16px 42px rgba(168,85,247,.25)"><i class="fa-solid ${icon}" style="color:white;font-size:12px"></i></div>`,
+    iconSize: [28, 28],
+    iconAnchor: [14, 14]
+  })
+}
 
 export default function Home() {
+  const [routes, setRoutes] = useState([])
+  const [places, setPlaces] = useState([])
+  const [events, setEvents] = useState([])
+  const [activeRouteId, setActiveRouteId] = useState(null)
+
+  useEffect(() => {
+    ;(async () => {
+      const r = await api.adminList("utvonalak")
+      const p = await api.adminList("destinaciok")
+      const e = await api.adminList("esemenyek")
+      setRoutes(Array.isArray(r) ? r : [])
+      setPlaces(Array.isArray(p) ? p : [])
+      setEvents(Array.isArray(e) ? e : [])
+    })()
+  }, [])
+
+  const mapCenter = useMemo(() => {
+    const anyPlace = places.find(x => Number.isFinite(Number(x.lat)) && Number.isFinite(Number(x.lng)))
+    if (anyPlace) return [Number(anyPlace.lat), Number(anyPlace.lng)]
+    return [47.4979, 19.0402]
+  }, [places])
+
+  const topRoutes = useMemo(() => routes.slice(0, 6), [routes])
+  const topPlaces = useMemo(() => places.slice(0, 6), [places])
+  const topEvents = useMemo(() => events.slice(0, 4), [events])
+
+  const activeRoute = useMemo(() => {
+    if (!activeRouteId) return null
+    return routes.find(r => String(r.id) === String(activeRouteId)) || null
+  }, [routes, activeRouteId])
+
   return (
-    <div className="home home-v3">
-      <div className="home-bg">
-        <div className="home-aurora" />
-        <div className="home-blob home-blob-1" />
-        <div className="home-blob home-blob-2" />
-        <div className="home-noise" />
+    <div className="hp">
+      <div className="hp-bg">
+        <div className="hp-blob a" />
+        <div className="hp-blob b" />
+        <div className="hp-blob c" />
+        <div className="hp-grid" />
       </div>
 
-      <header className="home-topbar blur-bg">
-        <div className="home-brand">
-          <div className="home-mark" aria-hidden="true">
-            <i className="fa-solid fa-bicycle" />
-          </div>
-          <div className="home-title">
-            <div className="home-logo">Két Keréken</div>
-            <div className="home-sub">Térképes bringás helyek és útvonalak</div>
+      <header className="hp-header">
+        <div className="hp-brand">
+          <div className="hp-mark"><i className="fa-solid fa-bicycle" /></div>
+          <div className="hp-brandText">
+            <div className="hp-name">Két Keréken</div>
+            <div className="hp-sub">Budapest</div>
           </div>
         </div>
 
-        <div className="home-actions-top">
-          <a className="home-navlink" href="#features">
-            Funkciók
+        <nav className="hp-nav">
+          <a href="/map">Térkép</a>
+          <a href="/routes">Útvonalak</a>
+          <a href="/events">Események</a>
+        </nav>
+
+        <div className="hp-ctaRow">
+          <a className="hp-btn ghost" href="/login">Bejelentkezés</a>
+          <a className="hp-btn primary" href="/map">
+            <i className="fa-solid fa-compass" />
+            <span>Indulás</span>
           </a>
-          <a className="home-navlink" href="#how">
-            Használat
-          </a>
-          <Link to="/terkep" className="home-map-btn">
-            Térkép
-          </Link>
         </div>
       </header>
 
-      <main className="home-main">
-        <section className="hero">
-          <div className="hero-left">
-            <div className="hero-pill blur-bg">
-              <i className="fa-solid fa-circle-info" />
-              <span>Egységes UI a térkép stílusával</span>
+      <main className="hp-main">
+        <section className="hp-hero">
+          <div className="hp-heroLeft">
+            <div className="hp-badge">
+              <span className="dot" />
+              <span>Útvonalak • Események • Helyek</span>
             </div>
 
-            <h1 className="hero-title">
-              Minden, ami kell egy jó bringatúrához —{" "}
-              <span className="hero-accent">egy térképen</span>.
+            <h1 className="hp-h1">
+              Bringázz okosabban.
+              <span className="grad"> Fedezz fel</span> mindent egy térképen.
             </h1>
 
-            <p className="hero-text">
-              Nézz pontokat, rétegeket, részleteket. Tervezéshez gyors,
-              használathoz letisztult.
+            <p className="hp-lead">
+              Minimal, gyors és átlátható felület: útvonalak, kölcsönzők, látnivalók és események – egy helyen.
             </p>
 
-            <div className="hero-buttons">
-              <Link to="/terkep" className="btn-primary">
+            <div className="hp-actions">
+              <a className="hp-btn primary big" href="/map">
                 <i className="fa-solid fa-map" />
                 <span>Térkép megnyitása</span>
-              </Link>
-
-              <a href="#features" className="btn-ghost blur-bg">
-                <i className="fa-solid fa-grid-2" />
-                <span>Funkciók</span>
+              </a>
+              <a className="hp-btn soft big" href="/routes">
+                <i className="fa-solid fa-route" />
+                <span>Útvonalak</span>
               </a>
             </div>
 
-            <div className="hero-metrics">
-              <div className="metric blur-bg">
-                <div className="m-top">
-                  <i className="fa-solid fa-gauge-high" />
-                  <span>Gyors</span>
-                </div>
-                <div className="m-sub">Vite + React</div>
+            <div className="hp-stats">
+              <div className="hp-stat">
+                <div className="k">{routes.length || "—"}</div>
+                <div className="v">útvonal</div>
               </div>
-
-              <div className="metric blur-bg">
-                <div className="m-top">
-                  <i className="fa-solid fa-panels-stay-open" />
-                  <span>Paneles</span>
-                </div>
-                <div className="m-sub">lista + részletek</div>
+              <div className="hp-stat">
+                <div className="k">{places.length || "—"}</div>
+                <div className="v">hely</div>
               </div>
-
-              <div className="metric blur-bg">
-                <div className="m-top">
-                  <i className="fa-solid fa-layer-group" />
-                  <span>Rétegek</span>
-                </div>
-                <div className="m-sub">átlátható nézet</div>
+              <div className="hp-stat">
+                <div className="k">{events.length || "—"}</div>
+                <div className="v">esemény</div>
               </div>
             </div>
           </div>
 
-          <div className="hero-right">
-            <div className="preview blur-strong">
-              <div className="preview-bar">
-                <div className="preview-left">
-                  <div className="dots" aria-hidden="true">
-                    <span />
-                    <span />
-                    <span />
-                  </div>
-                  <div className="preview-name">Előnézet</div>
+          <div className="hp-heroRight">
+            <div className="hp-mapFrame">
+              <div className="hp-mapTop">
+                <div className="hp-mapPills">
+                  <div className="pill on"><i className="fa-solid fa-location-dot" /><span>Helyek</span></div>
+                  <div className="pill"><i className="fa-solid fa-route" /><span>Útvonalak</span></div>
+                  <div className="pill"><i className="fa-solid fa-calendar-days" /><span>Események</span></div>
                 </div>
-
-                <div className="preview-right">
-                  <div className="chip blur-bg">
-                    <i className="fa-solid fa-layer-group" />
-                    <span>Rétegek</span>
-                  </div>
-                  <div className="chip blur-bg">
-                    <i className="fa-solid fa-sliders" />
-                    <span>Szűrő</span>
-                  </div>
-                </div>
+                <a className="hp-miniLink" href="/map">
+                  <span>Teljes térkép</span>
+                  <i className="fa-solid fa-arrow-right" />
+                </a>
               </div>
 
-              <div className="map-mock" aria-hidden="true">
-                <div className="mock-grid" />
-                <div className="mock-route" />
-                <div className="pin p1">
-                  <i className="fa-solid fa-location-dot" />
-                </div>
-                <div className="pin p2">
-                  <i className="fa-solid fa-location-dot" />
-                </div>
-                <div className="pin p3">
-                  <i className="fa-solid fa-location-dot" />
+              <div className="hp-mapWrap">
+                <MapContainer center={mapCenter} zoom={12} zoomControl={false} className="hp-map">
+                  <TileLayer url={tiles} />
+
+                  {topPlaces.slice(0, 10).map(p => {
+                    const lat = Number(p.lat)
+                    const lng = Number(p.lng)
+                    if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null
+                    return <Marker key={`p-${p.id}`} position={[lat, lng]} icon={pinIcon("pin")} />
+                  })}
+
+                  {topEvents.slice(0, 6).map(e => {
+                    const lat = Number(e.lat)
+                    const lng = Number(e.lng)
+                    if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null
+                    return <Marker key={`e-${e.id}`} position={[lat, lng]} icon={pinIcon("event")} />
+                  })}
+
+                  {topRoutes.slice(0, 6).map(r => {
+                    const coords = parseCoords(r.koordinatak)
+                    if (!coords.length) return null
+                    const active = String(r.id) === String(activeRouteId)
+                    return (
+                      <Polyline
+                        key={`r-${r.id}`}
+                        positions={coords}
+                        pathOptions={{
+                          weight: active ? 6 : 4,
+                          opacity: active ? 0.95 : 0.25,
+                          color: active ? "#a855f7" : "#6b7280"
+                        }}
+                      />
+                    )
+                  })}
+                </MapContainer>
+
+                <div className="hp-mapGlow" />
+              </div>
+
+              <div className="hp-mapBottom">
+                <div className="hp-miniCards">
+                  <button className={"miniCard " + (!activeRouteId ? "on" : "")} onClick={() => setActiveRouteId(null)}>
+                    <div className="t"><i className="fa-solid fa-wand-magic-sparkles" /> Ajánlott</div>
+                    <div className="s">Gyors preview</div>
+                  </button>
+
+                  {topRoutes.slice(0, 3).map(r => (
+                    <button
+                      key={r.id}
+                      className={"miniCard " + (String(activeRouteId) === String(r.id) ? "on" : "")}
+                      onClick={() => setActiveRouteId(r.id)}
+                      title={r.cim}
+                    >
+                      <div className="t"><i className="fa-solid fa-route" /> {r.cim || `#${r.id}`}</div>
+                      <div className="s">{r.nehezseg || "—"} • {r.hossz || "—"} km</div>
+                    </button>
+                  ))}
                 </div>
 
-                <div className="mock-panel blur-bg">
-                  <div className="mp-row">
-                    <i className="fa-solid fa-list" />
-                    <div className="mp-col">
-                      <div className="mp-title">Helyszínek</div>
-                      <div className="mp-sub">kattintás → részletek</div>
-                    </div>
-                    <div className="mp-badge">12</div>
+                {activeRoute && (
+                  <div className="hp-activeHint">
+                    <i className="fa-solid fa-circle-info" />
+                    <span>Kijelölve: {activeRoute.cim}</span>
                   </div>
-
-                  <div className="mp-row">
-                    <i className="fa-solid fa-route" />
-                    <div className="mp-col">
-                      <div className="mp-title">Útvonalak</div>
-                      <div className="mp-sub">fókusz + kiemelés</div>
-                    </div>
-                    <div className="mp-badge">4</div>
-                  </div>
-                </div>
-
-                <div className="mock-tooltip blur-bg">
-                  <div className="tt-title">Pihenőhely</div>
-                  <div className="tt-sub">pad • víz • árnyék</div>
-                </div>
-              </div>
-
-              <div className="preview-footer">
-                <div className="pf-left">
-                  <div className="pf-k">Kiválasztva</div>
-                  <div className="pf-v">Balaton-felvidék</div>
-                </div>
-                <Link to="/terkep" className="pf-btn">
-                  Megnyitás <i className="fa-solid fa-arrow-right" />
-                </Link>
-              </div>
-            </div>
-
-            <div className="side-mini">
-              <div className="mini-card blur-bg">
-                <i className="fa-solid fa-compass" />
-                <div>
-                  <div className="mini-title">Gyors navigáció</div>
-                  <div className="mini-sub">panel + rétegkezelés</div>
-                </div>
-              </div>
-
-              <div className="mini-card blur-bg">
-                <i className="fa-solid fa-shield-halved" />
-                <div>
-                  <div className="mini-title">Letisztult</div>
-                  <div className="mini-sub">kevesebb zaj, több infó</div>
-                </div>
+                )}
               </div>
             </div>
           </div>
         </section>
 
-        <section id="features" className="section">
-          <div className="section-head">
-            <h2>Funkciók</h2>
-            <p>Olyan, mint a térképoldal: gyors, paneles, jól olvasható.</p>
+        <section className="hp-section">
+          <div className="hp-secHead">
+            <h2>Miért ez?</h2>
+            <p>Letisztult, gyors és térkép-központú. Ugyanaz a vibe, mint az admin felületen.</p>
           </div>
 
-          <div className="feature-grid">
-            {features.map((f) => (
-              <div className="feature-card blur-bg" key={f.title}>
-                <div className="f-ico">
-                  <i className={f.icon} />
+          <div className="hp-features">
+            <div className="hp-card">
+              <div className="hp-ic"><i className="fa-solid fa-bolt" /></div>
+              <div className="hp-cardT">Gyors</div>
+              <div className="hp-cardS">Könnyű navigáció, azonnali átláthatóság.</div>
+            </div>
+
+            <div className="hp-card">
+              <div className="hp-ic"><i className="fa-solid fa-layer-group" /></div>
+              <div className="hp-cardT">Rétegek</div>
+              <div className="hp-cardS">Helyek, kölcsönzők, események – egy mapen.</div>
+            </div>
+
+            <div className="hp-card">
+              <div className="hp-ic"><i className="fa-solid fa-route" /></div>
+              <div className="hp-cardT">Útvonalak</div>
+              <div className="hp-cardS">Kiemelt preview, nehézség és hossz.</div>
+            </div>
+
+            <div className="hp-card">
+              <div className="hp-ic"><i className="fa-solid fa-shield-halved" /></div>
+              <div className="hp-cardT">Admin ready</div>
+              <div className="hp-cardS">Szerkeszthető tartalom, role-based rendszerhez passzol.</div>
+            </div>
+          </div>
+        </section>
+
+        <section className="hp-section">
+          <div className="hp-secHead">
+            <h2>Népszerű helyek</h2>
+            <p>Gyors válogatás a legjobb spotokból.</p>
+          </div>
+
+          <div className="hp-gridCards">
+            {topPlaces.map(p => (
+              <div key={p.id} className="hp-card2">
+                <div className="hp-card2Top">
+                  <div className="tag"><i className="fa-solid fa-location-dot" /> hely</div>
+                  <div className="id">#{p.id}</div>
                 </div>
-                <div className="f-title">{f.title}</div>
-                <div className="f-desc">{f.desc}</div>
+                <div className="hp-card2T">{p.nev || `Hely #${p.id}`}</div>
+                <div className="hp-card2S">{p.leiras || "—"}</div>
+                <div className="hp-card2Foot">
+                  <a className="hp-link" href="/map">Megnyitás <i className="fa-solid fa-arrow-right" /></a>
+                </div>
               </div>
             ))}
           </div>
         </section>
 
-        <section id="how" className="section">
-          <div className="section-head">
-            <h2>Használat</h2>
-            <p>3 lépés, ugyanaz a logika mint a map oldalon.</p>
+        <section className="hp-section">
+          <div className="hp-secHead">
+            <h2>Közelgő események</h2>
+            <p>Ami mostanában történik.</p>
           </div>
 
-          <div className="steps">
-            <div className="step blur-bg">
-              <div className="step-n">1</div>
-              <div className="step-body">
-                <div className="step-title">
-                  <i className="fa-solid fa-map" /> Térkép megnyitása
+          <div className="hp-list">
+            {topEvents.map(e => (
+              <div key={e.id} className="hp-row">
+                <div className="left">
+                  <div className="ttl"><i className="fa-solid fa-calendar-days" /> {e.nev || `Esemény #${e.id}`}</div>
+                  <div className="sub">{e.leiras || "—"}</div>
                 </div>
-                <div className="step-sub">Menj a térkép oldalra és indulhat.</div>
-              </div>
-            </div>
-
-            <div className="step blur-bg">
-              <div className="step-n">2</div>
-              <div className="step-body">
-                <div className="step-title">
-                  <i className="fa-solid fa-layer-group" /> Rétegek választása
-                </div>
-                <div className="step-sub">
-                  Kapcsold be a kategóriákat / pontokat.
+                <div className="right">
+                  <div className="pill2">{e.datum || "—"}</div>
+                  <a className="hp-btn soft" href="/map"><span>Mutasd</span><i className="fa-solid fa-arrow-right" /></a>
                 </div>
               </div>
-            </div>
+            ))}
+          </div>
+        </section>
 
-            <div className="step blur-bg">
-              <div className="step-n">3</div>
-              <div className="step-body">
-                <div className="step-title">
-                  <i className="fa-solid fa-circle-info" /> Részletek panel
-                </div>
-                <div className="step-sub">
-                  Kattintás → gyors infó → döntés.
-                </div>
+        <section className="hp-final">
+          <div className="hp-finalCard">
+            <div className="hp-finalGlow" />
+            <div className="hp-finalIn">
+              <div className="hp-finalT">Készen állsz?</div>
+              <div className="hp-finalS">Nyisd meg a térképet és kezdj el felfedezni. Ugyanaz a minimal dark élmény, lila akcentussal.</div>
+              <div className="hp-finalA">
+                <a className="hp-btn primary big" href="/map"><i className="fa-solid fa-map" /><span>Térkép</span></a>
+                <a className="hp-btn ghost big" href="/admin"><i className="fa-solid fa-shield-halved" /><span>Admin</span></a>
               </div>
             </div>
           </div>
         </section>
-
-        <section className="cta blur-strong">
-          <div>
-            <h2>Mehet a túra?</h2>
-            <p>Nyisd meg a térképet, és válogass a helyek között.</p>
-          </div>
-          <div className="cta-actions">
-            <Link to="/terkep" className="btn-primary">
-              <i className="fa-solid fa-map" />
-              <span>Irány a térkép</span>
-            </Link>
-          </div>
-        </section>
-
-        <footer className="footer">
-          <div>© {new Date().getFullYear()} Két Keréken</div>
-          <div className="footer-pills">
-            <span className="pill blur-bg">
-              <i className="fa-brands fa-react" /> React
-            </span>
-            <span className="pill blur-bg">
-              <i className="fa-solid fa-bolt" /> Vite
-            </span>
-          </div>
-        </footer>
       </main>
+
+      <footer className="hp-foot">
+        <div className="hp-footL">
+          <div className="hp-footMark"><i className="fa-solid fa-bicycle" /></div>
+          <div>
+            <div className="hp-footName">Két Keréken</div>
+            <div className="hp-footSub">Minimal map platform</div>
+          </div>
+        </div>
+        <div className="hp-footR">
+          <a href="/map">Térkép</a>
+          <a href="/routes">Útvonalak</a>
+          <a href="/events">Események</a>
+          <a href="/admin">Admin</a>
+        </div>
+      </footer>
     </div>
-  );
+  )
 }
