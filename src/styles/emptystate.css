@@ -1,0 +1,24 @@
+.emptyx{
+padding:60px 20px;
+display:flex;
+flex-direction:column;
+align-items:center;
+text-align:center;
+opacity:.7;
+}
+
+.emptyx i{
+font-size:36px;
+margin-bottom:10px;
+color:#a855f7;
+}
+
+.emptyx h3{
+margin:0;
+font-weight:800;
+}
+
+.emptyx p{
+margin-top:6px;
+font-size:14px;
+}
