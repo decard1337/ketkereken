@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react"
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom"
 import Home from "./pages/Home"
 import MapPage from "./pages/MapPage"
@@ -5,6 +6,8 @@ import Login from "./pages/Login"
 import Register from "./pages/Register"
 import Admin from "./pages/Admin"
 import { AuthProvider, useAuth } from "./lib/auth"
+import NotFound from "./pages/NotFound"
+import LoadingScreen from "./components/LoadingScreen"
 
 function AdminRoute({ children }) {
   const { user, ready } = useAuth()
@@ -16,6 +19,18 @@ function AdminRoute({ children }) {
 }
 
 export default function App() {
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const t = setTimeout(() => {
+      setLoading(false)
+    }, 1500)
+
+    return () => clearTimeout(t)
+  }, [])
+
+  if (loading) return <LoadingScreen />
+
   return (
     <AuthProvider>
       <BrowserRouter>
@@ -32,7 +47,7 @@ export default function App() {
               </AdminRoute>
             }
           />
-          <Route path="*" element={<Navigate to="/" replace />} />
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
     </AuthProvider>

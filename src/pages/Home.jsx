@@ -3,6 +3,8 @@ import { MapContainer, TileLayer, Marker, Polyline } from "react-leaflet"
 import L from "leaflet"
 import { api } from "../lib/api"
 import "../styles/home.css"
+import Onboarding from "../components/Onboarding"
+<Onboarding/>
 
 const tiles = "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
 
