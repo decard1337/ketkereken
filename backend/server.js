@@ -85,12 +85,12 @@ app.post("/api/auth/register", async (req, res) => {
   if (typeof password !== "string" || password.length < 6) return res.status(400).json({ error: "Weak password" });
 
   try {
-    const [exists] = await pool.query("SELECT id FROM users WHERE email=?", [email]);
+    const [exists] = await pool.query("SELECT id FROM felhasznalok WHERE email=?", [email]);
     if (exists.length) return res.status(409).json({ error: "Email already used" });
 
     const password_hash = await bcrypt.hash(password, 12);
     const [ins] = await pool.query(
-      "INSERT INTO users (email, username, password_hash, role) VALUES (?,?,?, 'user')",
+      "INSERT INTO felhasznalok (email, username, password_hash, role) VALUES (?,?,?, 'user')",
       [email, username, password_hash]
     );
 
@@ -110,7 +110,7 @@ app.post("/api/auth/login", async (req, res) => {
 
   try {
     const [rows] = await pool.query(
-      "SELECT id, email, username, password_hash, role FROM users WHERE email=? LIMIT 1",
+      "SELECT id, email, username, password_hash, role FROM felhasznalok WHERE email=? LIMIT 1",
       [email]
     );
     const u = rows?.[0];
