@@ -13,7 +13,7 @@ const RES = [
   { key: "kolcsonzok", label: "Kölcsönzők", icon: "fa-bicycle" },
   { key: "blippek", label: "Blippek", icon: "fa-layer-group" },
   { key: "menu", label: "Menü", icon: "fa-bars" },
-  { key: "users", label: "Users", icon: "fa-user" }
+  { key: "felhasznalok", label: "Users", icon: "fa-user" }
 ]
 
 function emptyFor(resource) {
@@ -23,7 +23,7 @@ function emptyFor(resource) {
   if (resource === "kolcsonzok") return { nev: "", cim: "", lat: "", lng: "", ar: "", telefon: "", nyitvatartas: "", statusz: "aktiv" }
   if (resource === "blippek") return { nev: "", leiras: "", lat: "", lng: "", tipus: "altalanos", ikon: "circle", statusz: "aktiv" }
   if (resource === "menu") return { nev: "", link: "", statusz: "aktiv", sorrend: "" }
-  if (resource === "users") return { username: "", email: "", role: "user" }
+  if (resource === "felhasznalok") return { username: "", email: "", role: "user" }
   return {}
 }
 
@@ -95,11 +95,11 @@ export default function Admin() {
 
   const titleKey = useMemo(() => {
     if (resource === "utvonalak") return "cim"
-    if (resource === "users") return "username"
+    if (resource === "felhasznalok") return "username"
     return "nev"
   }, [resource])
 
-  const hasLatLng = useMemo(() => resource !== "utvonalak" && resource !== "menu" && resource !== "users", [resource])
+  const hasLatLng = useMemo(() => resource !== "utvonalak" && resource !== "menu" && resource !== "felhasznalok", [resource])
 
   async function loadOne(key) {
     const items = await api.adminList(key)
@@ -335,10 +335,10 @@ export default function Admin() {
               onClick={() => openEdit(resource, it)}
             >
               <div className="adm2-itemtitle">
-                {resource === "users" ? (it.username || it.email || `#${it.id}`) : (it[titleKey] ?? `#${it.id}`)}
+                {resource === "felhasznalok" ? (it.username || it.email || `#${it.id}`) : (it[titleKey] ?? `#${it.id}`)}
               </div>
               <div className="adm2-itemsub">
-                {resource === "users" ? (it.email || `ID: ${it.id}`) : `ID: ${it.id}`}
+                {resource === "felhasznalok" ? (it.email || `ID: ${it.id}`) : `ID: ${it.id}`}
               </div>
             </button>
           ))}
