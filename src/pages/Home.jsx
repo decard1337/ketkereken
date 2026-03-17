@@ -79,14 +79,14 @@ export default function Home() {
         </div>
 
         <nav className="hp-nav">
-          <a href="/map">Térkép</a>
+          <a href="/terkep">Térkép</a>
           <a href="/routes">Útvonalak</a>
           <a href="/events">Események</a>
         </nav>
 
         <div className="hp-ctaRow">
           <a className="hp-btn ghost" href="/login">Bejelentkezés</a>
-          <a className="hp-btn primary" href="/map">
+          <a className="hp-btn primary" href="/terkep">
             <i className="fa-solid fa-compass" />
             <span>Indulás</span>
           </a>
@@ -111,7 +111,7 @@ export default function Home() {
             </p>
 
             <div className="hp-actions">
-              <a className="hp-btn primary big" href="/map">
+              <a className="hp-btn primary big" href="/terkep">
                 <i className="fa-solid fa-map" />
                 <span>Térkép megnyitása</span>
               </a>
@@ -145,7 +145,7 @@ export default function Home() {
                   <div className="pill"><i className="fa-solid fa-route" /><span>Útvonalak</span></div>
                   <div className="pill"><i className="fa-solid fa-calendar-days" /><span>Események</span></div>
                 </div>
-                <a className="hp-miniLink" href="/map">
+                <a className="hp-miniLink" href="/terkep">
                   <span>Teljes térkép</span>
                   <i className="fa-solid fa-arrow-right" />
                 </a>
@@ -270,7 +270,7 @@ export default function Home() {
                 <div className="hp-card2T">{p.nev || `Hely #${p.id}`}</div>
                 <div className="hp-card2S">{p.leiras || "—"}</div>
                 <div className="hp-card2Foot">
-                  <a className="hp-link" href="/map">Megnyitás <i className="fa-solid fa-arrow-right" /></a>
+                  <a className="hp-link" href="/terkep">Megnyitás <i className="fa-solid fa-arrow-right" /></a>
                 </div>
               </div>
             ))}
@@ -292,7 +292,7 @@ export default function Home() {
                 </div>
                 <div className="right">
                   <div className="pill2">{e.datum || "—"}</div>
-                  <a className="hp-btn soft" href="/map"><span>Mutasd</span><i className="fa-solid fa-arrow-right" /></a>
+                  <a className="hp-btn soft" href="/terkep"><span>Mutasd</span><i className="fa-solid fa-arrow-right" /></a>
                 </div>
               </div>
             ))}
@@ -306,7 +306,7 @@ export default function Home() {
               <div className="hp-finalT">Készen állsz?</div>
               <div className="hp-finalS">Nyisd meg a térképet és kezdj el felfedezni. Ugyanaz a minimal dark élmény, lila akcentussal.</div>
               <div className="hp-finalA">
-                <a className="hp-btn primary big" href="/map"><i className="fa-solid fa-map" /><span>Térkép</span></a>
+                <a className="hp-btn primary big" href="/terkep"><i className="fa-solid fa-map" /><span>Térkép</span></a>
                 <a className="hp-btn ghost big" href="/admin"><i className="fa-solid fa-shield-halved" /><span>Admin</span></a>
               </div>
             </div>
@@ -323,7 +323,7 @@ export default function Home() {
           </div>
         </div>
         <div className="hp-footR">
-          <a href="/map">Térkép</a>
+          <a href="/terkep">Térkép</a>
           <a href="/routes">Útvonalak</a>
           <a href="/events">Események</a>
           <a href="/admin">Admin</a>
