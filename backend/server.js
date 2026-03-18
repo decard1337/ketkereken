@@ -138,6 +138,7 @@ app.get("/health", (req, res) => {
 
 app.post("/api/auth/register", async (req, res) => {
   try {
+<<<<<<< HEAD
     const { email, username, password } = req.body
 
     if (!email || !username || !password) {
@@ -157,6 +158,14 @@ app.post("/api/auth/register", async (req, res) => {
 
     const [result] = await pool.query(
       "INSERT INTO users (email, username, password_hash, role) VALUES (?,?,?, 'user')",
+=======
+    const [exists] = await pool.query("SELECT id FROM felhasznalok WHERE email=?", [email]);
+    if (exists.length) return res.status(409).json({ error: "Email already used" });
+
+    const password_hash = await bcrypt.hash(password, 12);
+    const [ins] = await pool.query(
+      "INSERT INTO felhasznalok (email, username, password_hash, role) VALUES (?,?,?, 'user')",
+>>>>>>> 4370b5db1a13259b06c52c9a373e9b308aa6bb95
       [email, username, password_hash]
     )
 
@@ -186,7 +195,7 @@ app.post("/api/auth/login", async (req, res) => {
     }
 
     const [rows] = await pool.query(
-      "SELECT id, email, username, password_hash, role FROM users WHERE email=? LIMIT 1",
+      "SELECT id, email, username, password_hash, role FROM felhasznalok WHERE email=? LIMIT 1",
       [email]
     )
 
