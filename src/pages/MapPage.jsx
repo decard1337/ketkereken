@@ -1,93 +1,69 @@
-import { useEffect, useMemo, useState } from "react";
-import { api } from "../lib/api";
+import { useEffect, useMemo, useState } from "react"
+import { api } from "../lib/api"
 
-import Splash from "../ui/Splash";
-import Sidebar from "../ui/Sidebar";
-import BottomControls from "../ui/BottomControls";
-import LayerPanel from "../ui/LayerPanel";
-import Panels from "../ui/Panels";
-import MapView from "../ui/MapView";
+import Splash from "../ui/Splash"
+import Sidebar from "../ui/Sidebar"
+import BottomControls from "../ui/BottomControls"
+import LayerPanel from "../ui/LayerPanel"
+import Panels from "../ui/Panels"
+import MapView from "../ui/MapView"
 
 export default function MapPage() {
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(true)
 
-  const [menu, setMenu] = useState([]);
-  const [utvonalak, setUtvonalak] = useState([]);
-  const [destinaciok, setDestinaciok] = useState([]);
-  const [esemenyek, setEsemenyek] = useState([]);
-  const [kolcsonzok, setKolcsonzok] = useState([]);
-  const [blippek, setBlippek] = useState([]);
+  const [menu, setMenu] = useState([])
+  const [utvonalak, setUtvonalak] = useState([])
+  const [destinaciok, setDestinaciok] = useState([])
+  const [esemenyek, setEsemenyek] = useState([])
+  const [kolcsonzok, setKolcsonzok] = useState([])
+  const [blippek, setBlippek] = useState([])
 
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [layerPanelOpen, setLayerPanelOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [layerPanelOpen, setLayerPanelOpen] = useState(false)
 
-  const [activePanel, setActivePanel] = useState(null); 
-  const [selected, setSelected] = useState(null);
+  const [activePanel, setActivePanel] = useState(null)
+  const [selected, setSelected] = useState(null)
 
-  const [layerType, setLayerType] = useState("standard");
-  const [search, setSearch] = useState("");
+  const [layerType, setLayerType] = useState("standard")
 
-  const [myPos, setMyPos] = useState(null);
-  const [locRequestTick, setLocRequestTick] = useState(0);
+  const [myPos, setMyPos] = useState(null)
+  const [locRequestTick, setLocRequestTick] = useState(0)
 
   useEffect(() => {
-    let cancelled = false;
+    let cancelled = false
 
     async function load() {
       try {
-        setLoading(true);
+        setLoading(true)
+
         const [m, u, d, e, k, b] = await Promise.all([
           api.menu(),
           api.utvonalak(),
           api.destinaciok(),
           api.esemenyek(),
           api.kolcsonzok(),
-          api.blippek(),
-        ]);
-        if (cancelled) return;
-        setMenu(m);
-        setUtvonalak(u);
-        setDestinaciok(d);
-        setEsemenyek(e);
-        setKolcsonzok(k);
-        setBlippek(b);
+          api.blippek()
+        ])
+
+        if (cancelled) return
+
+        setMenu(m || [])
+        setUtvonalak(u || [])
+        setDestinaciok(d || [])
+        setEsemenyek(e || [])
+        setKolcsonzok(k || [])
+        setBlippek(b || [])
       } finally {
-        if (!cancelled) setLoading(false);
+        if (!cancelled) setLoading(false)
       }
     }
 
-    load();
-    return () => { cancelled = true; };
-  }, []);
+    load()
 
-  useEffect(() => {
-    const q = search.trim().toLowerCase();
-    if (q.length < 2) return;
-
-    const all = [
-      ...blippek.map(x => ({ ...x, _type: "blipp" })),
-      ...destinaciok.map(x => ({ ...x, _type: "destinacio" })),
-      ...esemenyek.map(x => ({ ...x, _type: "esemeny" })),
-      ...kolcsonzok.map(x => ({ ...x, _type: "kolcsonzo" })),
-      ...utvonalak.map(x => ({ ...x, _type: "utvonal" })),
-    ];
-
-    const hit = all.find(item => {
-      const fields = [
-        item.nev, item.cim, item.leiras, item.tipus, item.cimke, item.hossz
-      ].filter(Boolean).map(s => s.toString().toLowerCase());
-      return fields.some(s => s.includes(q));
-    });
-
-    if (!hit) return;
-
-    if (hit._type === "utvonal") setSelected({ type: "utvonal", id: hit.id });
-    else if (hit._type === "destinacio") setSelected({ type: "destinacio", id: hit.id });
-    else if (hit._type === "esemeny") setSelected({ type: "esemeny", id: hit.id });
-    else if (hit._type === "kolcsonzo") setSelected({ type: "kolcsonzo", id: hit.id });
-    else setSelected({ type: "blipp", id: hit.id });
-
-  }, [search, blippek, destinaciok, esemenyek, kolcsonzok, utvonalak]);
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   function openPanelByMenu(link) {
     const mapping = {
@@ -95,25 +71,51 @@ export default function MapPage() {
       desztinaciok: "destinaciok",
       esemenyek: "esemenyek",
       "kölcsönzők": "kolcsonzok",
-      kolcsonzok: "kolcsonzok",
-    };
-    const p = mapping[link];
-    if (!p) return;
-    setActivePanel(p);
-    setSelected(null);
-    setSidebarOpen(false);
+      kolcsonzok: "kolcsonzok"
+    }
+
+    const panel = mapping[link]
+    if (!panel) return
+
+    setActivePanel(panel)
+    setSelected(null)
+    setSidebarOpen(false)
+  }
+
+  function openDetailsFromMap(type, id) {
+    const mapping = {
+      utvonal: "utvonalak",
+      destinacio: "destinaciok",
+      esemeny: "esemenyek",
+      kolcsonzo: "kolcsonzok",
+      blipp: "blippek"
+    }
+
+    const panel = mapping[type]
+    if (!panel) return
+
+    setSelected({ type, id })
+    setActivePanel(panel)
+    setSidebarOpen(false)
+    setLayerPanelOpen(false)
   }
 
   useEffect(() => {
-    if (locRequestTick === 0) return;
-    if (!navigator.geolocation) return;
+    if (locRequestTick === 0) return
+    if (!navigator.geolocation) return
 
     navigator.geolocation.getCurrentPosition(
-      (pos) => setMyPos([pos.coords.latitude, pos.coords.longitude]),
+      pos => {
+        setMyPos([pos.coords.latitude, pos.coords.longitude])
+      },
       () => {},
-      { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
-    );
-  }, [locRequestTick]);
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 60000
+      }
+    )
+  }, [locRequestTick])
 
   const mapPoints = useMemo(() => {
     const b = blippek.map(x => ({
@@ -124,8 +126,10 @@ export default function MapPage() {
       lat: Number(x.lat),
       lng: Number(x.lng),
       ikon: x.ikon || "circle",
-      extra: { kategoriatipus: x.tipus }
-    }));
+      extra: {
+        kategoriatipus: x.tipus
+      }
+    }))
 
     const d = destinaciok.map(x => ({
       id: x.id,
@@ -135,8 +139,11 @@ export default function MapPage() {
       lat: Number(x.lat),
       lng: Number(x.lng),
       ikon: "map-marker-alt",
-      extra: { ertekeles: x.ertekeles, tipus: x.tipus }
-    }));
+      extra: {
+        ertekeles: x.ertekeles,
+        tipus: x.tipus
+      }
+    }))
 
     const e = esemenyek.map(x => ({
       id: x.id,
@@ -146,8 +153,12 @@ export default function MapPage() {
       lat: Number(x.lat),
       lng: Number(x.lng),
       ikon: "calendar-alt",
-      extra: { datum: x.datum, resztvevok: x.resztvevok, tipus: x.tipus }
-    }));
+      extra: {
+        datum: x.datum,
+        resztvevok: x.resztvevok,
+        tipus: x.tipus
+      }
+    }))
 
     const k = kolcsonzok.map(x => ({
       id: x.id,
@@ -157,13 +168,17 @@ export default function MapPage() {
       lat: Number(x.lat),
       lng: Number(x.lng),
       ikon: "bicycle",
-      extra: { ar: x.ar, telefon: x.telefon, nyitvatartas: x.nyitvatartas }
-    }));
+      extra: {
+        ar: x.ar,
+        telefon: x.telefon,
+        nyitvatartas: x.nyitvatartas
+      }
+    }))
 
-    return [...b, ...d, ...e, ...k];
-  }, [blippek, destinaciok, esemenyek, kolcsonzok]);
+    return [...b, ...d, ...e, ...k]
+  }, [blippek, destinaciok, esemenyek, kolcsonzok])
 
-  const mapHasPanel = Boolean(activePanel);
+  const mapHasPanel = Boolean(activePanel)
 
   return (
     <div id="app">
@@ -177,12 +192,12 @@ export default function MapPage() {
           selected={selected}
           myPos={myPos}
           onSelect={setSelected}
+          onOpenDetails={openDetailsFromMap}
           onMapClick={() => {
-            setLayerPanelOpen(false);
+            setLayerPanelOpen(false)
           }}
         />
 
-        {/* fejléc */}
         <div id="header">
           <div id="floating-title">
             <i className="fas fa-bicycle" />
@@ -191,32 +206,32 @@ export default function MapPage() {
         </div>
 
         <Sidebar
-        open={sidebarOpen}
-        menu={menu}
-        onClose={() => setSidebarOpen(false)}
-        onOpen={() => setSidebarOpen(true)}
-        onMenuClick={(link) => openPanelByMenu(link)}
+          open={sidebarOpen}
+          menu={menu}
+          onClose={() => setSidebarOpen(false)}
+          onOpen={() => setSidebarOpen(true)}
+          onMenuClick={link => openPanelByMenu(link)}
         />
 
         <LayerPanel
           open={layerPanelOpen}
           layerType={layerType}
-          onChange={(v) => {
-            setLayerType(v);
-            setLayerPanelOpen(false);
+          onChange={v => {
+            setLayerType(v)
+            setLayerPanelOpen(false)
           }}
         />
 
         <BottomControls
-          search={search}
-          onSearch={setSearch}
+          search=""
+          onSearch={() => {}}
           onMenu={() => {
-            setSidebarOpen(true);
-            setLayerPanelOpen(false);
+            setSidebarOpen(true)
+            setLayerPanelOpen(false)
           }}
           onLayers={() => {
-            setLayerPanelOpen(v => !v);
-            setSidebarOpen(false);
+            setLayerPanelOpen(v => !v)
+            setSidebarOpen(false)
           }}
           onLocation={() => setLocRequestTick(t => t + 1)}
           layersActive={layerPanelOpen}
@@ -226,8 +241,8 @@ export default function MapPage() {
       <Panels
         activePanel={activePanel}
         onClose={() => {
-          setActivePanel(null);
-          setSelected(null);
+          setActivePanel(null)
+          setSelected(null)
         }}
         utvonalak={utvonalak}
         destinaciok={destinaciok}
@@ -237,5 +252,5 @@ export default function MapPage() {
         onSelect={setSelected}
       />
     </div>
-  );
+  )
 }
