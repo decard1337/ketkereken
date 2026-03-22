@@ -4,7 +4,6 @@ import L from "leaflet"
 import { api } from "../lib/api"
 import "../styles/home.css"
 import Onboarding from "../components/Onboarding"
-<Onboarding/>
 
 const tiles = "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
 
@@ -18,8 +17,29 @@ function parseCoords(v) {
 }
 
 function pinIcon(kind = "pin") {
-  const bg = kind === "event" ? "rgba(168,85,247,.95)" : kind === "route" ? "rgba(99,102,241,.95)" : "rgba(167,139,250,.95)"
-  const icon = kind === "event" ? "fa-calendar-days" : kind === "route" ? "fa-route" : "fa-location-dot"
+  let bg = "rgba(167,139,250,.95)"
+  let icon = "fa-location-dot"
+
+  if (kind === "event") {
+    bg = "rgba(168,85,247,.95)"
+    icon = "fa-calendar-days"
+  }
+
+  if (kind === "route") {
+    bg = "rgba(99,102,241,.95)"
+    icon = "fa-route"
+  }
+
+  if (kind === "rent") {
+    bg = "rgba(59,130,246,.95)"
+    icon = "fa-bicycle"
+  }
+
+  if (kind === "blip") {
+    bg = "rgba(139,92,246,.95)"
+    icon = "fa-location-crosshairs"
+  }
+
   return L.divIcon({
     className: "",
     html: `<div style="width:28px;height:28px;border-radius:12px;background:${bg};border:1px solid rgba(255,255,255,.16);display:flex;align-items:center;justify-content:center;box-shadow:0 16px 42px rgba(168,85,247,.25)"><i class="fa-solid ${icon}" style="color:white;font-size:12px"></i></div>`,
@@ -32,28 +52,52 @@ export default function Home() {
   const [routes, setRoutes] = useState([])
   const [places, setPlaces] = useState([])
   const [events, setEvents] = useState([])
+  const [rentals, setRentals] = useState([])
+  const [blips, setBlips] = useState([])
   const [activeRouteId, setActiveRouteId] = useState(null)
 
   useEffect(() => {
     ;(async () => {
-      const r = await api.adminList("utvonalak")
-      const p = await api.adminList("destinaciok")
-      const e = await api.adminList("esemenyek")
-      setRoutes(Array.isArray(r) ? r : [])
-      setPlaces(Array.isArray(p) ? p : [])
-      setEvents(Array.isArray(e) ? e : [])
+      try {
+        const [r, p, e, k, b] = await Promise.all([
+          api.utvonalak(),
+          api.destinaciok(),
+          api.esemenyek(),
+          api.kolcsonzok(),
+          api.blippek()
+        ])
+
+        setRoutes(Array.isArray(r) ? r : [])
+        setPlaces(Array.isArray(p) ? p : [])
+        setEvents(Array.isArray(e) ? e : [])
+        setRentals(Array.isArray(k) ? k : [])
+        setBlips(Array.isArray(b) ? b : [])
+      } catch (err) {
+        console.error("Homepage load error:", err)
+        setRoutes([])
+        setPlaces([])
+        setEvents([])
+        setRentals([])
+        setBlips([])
+      }
     })()
   }, [])
 
   const mapCenter = useMemo(() => {
     const anyPlace = places.find(x => Number.isFinite(Number(x.lat)) && Number.isFinite(Number(x.lng)))
     if (anyPlace) return [Number(anyPlace.lat), Number(anyPlace.lng)]
+
+    const anyBlip = blips.find(x => Number.isFinite(Number(x.lat)) && Number.isFinite(Number(x.lng)))
+    if (anyBlip) return [Number(anyBlip.lat), Number(anyBlip.lng)]
+
     return [47.4979, 19.0402]
-  }, [places])
+  }, [places, blips])
 
   const topRoutes = useMemo(() => routes.slice(0, 6), [routes])
   const topPlaces = useMemo(() => places.slice(0, 6), [places])
   const topEvents = useMemo(() => events.slice(0, 4), [events])
+  const topRentals = useMemo(() => rentals.slice(0, 8), [rentals])
+  const topBlips = useMemo(() => blips.slice(0, 12), [blips])
 
   const activeRoute = useMemo(() => {
     if (!activeRouteId) return null
@@ -62,6 +106,8 @@ export default function Home() {
 
   return (
     <div className="hp">
+      <Onboarding />
+
       <div className="hp-bg">
         <div className="hp-blob a" />
         <div className="hp-blob b" />
@@ -123,16 +169,20 @@ export default function Home() {
 
             <div className="hp-stats">
               <div className="hp-stat">
-                <div className="k">{routes.length || "—"}</div>
+                <div className="k">{routes.length}</div>
                 <div className="v">útvonal</div>
               </div>
               <div className="hp-stat">
-                <div className="k">{places.length || "—"}</div>
+                <div className="k">{places.length}</div>
                 <div className="v">hely</div>
               </div>
               <div className="hp-stat">
-                <div className="k">{events.length || "—"}</div>
+                <div className="k">{events.length}</div>
                 <div className="v">esemény</div>
+              </div>
+              <div className="hp-stat">
+                <div className="k">{blips.length}</div>
+                <div className="v">blipp</div>
               </div>
             </div>
           </div>
@@ -159,20 +209,60 @@ export default function Home() {
                     const lat = Number(p.lat)
                     const lng = Number(p.lng)
                     if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null
-                    return <Marker key={`p-${p.id}`} position={[lat, lng]} icon={pinIcon("pin")} />
+                    return (
+                      <Marker
+                        key={`place-${p.id}`}
+                        position={[lat, lng]}
+                        icon={pinIcon("pin")}
+                      />
+                    )
                   })}
 
                   {topEvents.slice(0, 6).map(e => {
                     const lat = Number(e.lat)
                     const lng = Number(e.lng)
                     if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null
-                    return <Marker key={`e-${e.id}`} position={[lat, lng]} icon={pinIcon("event")} />
+                    return (
+                      <Marker
+                        key={`event-${e.id}`}
+                        position={[lat, lng]}
+                        icon={pinIcon("event")}
+                      />
+                    )
+                  })}
+
+                  {topRentals.slice(0, 8).map(k => {
+                    const lat = Number(k.lat)
+                    const lng = Number(k.lng)
+                    if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null
+                    return (
+                      <Marker
+                        key={`rent-${k.id}`}
+                        position={[lat, lng]}
+                        icon={pinIcon("rent")}
+                      />
+                    )
+                  })}
+
+                  {topBlips.slice(0, 12).map(b => {
+                    const lat = Number(b.lat)
+                    const lng = Number(b.lng)
+                    if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null
+                    return (
+                      <Marker
+                        key={`blip-${b.id}`}
+                        position={[lat, lng]}
+                        icon={pinIcon("blip")}
+                      />
+                    )
                   })}
 
                   {topRoutes.slice(0, 6).map(r => {
                     const coords = parseCoords(r.koordinatak)
                     if (!coords.length) return null
+
                     const active = String(r.id) === String(activeRouteId)
+
                     return (
                       <Polyline
                         key={`r-${r.id}`}
@@ -192,7 +282,10 @@ export default function Home() {
 
               <div className="hp-mapBottom">
                 <div className="hp-miniCards">
-                  <button className={"miniCard " + (!activeRouteId ? "on" : "")} onClick={() => setActiveRouteId(null)}>
+                  <button
+                    className={"miniCard " + (!activeRouteId ? "on" : "")}
+                    onClick={() => setActiveRouteId(null)}
+                  >
                     <div className="t"><i className="fa-solid fa-wand-magic-sparkles" /> Ajánlott</div>
                     <div className="s">Gyors preview</div>
                   </button>
