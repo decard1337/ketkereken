@@ -1,48 +1,91 @@
-import { createContext, useContext, useEffect, useMemo, useState } from "react";
-import { api } from "./api";
+import { createContext, useContext, useEffect, useState } from "react"
+import { api } from "./api"
 
-const AuthCtx = createContext(null);
+const AuthContext = createContext(null)
 
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null);
-  const [ready, setReady] = useState(false);
+  const [user, setUser] = useState(null)
+  const [ready, setReady] = useState(false)
 
-  async function refresh() {
+  useEffect(() => {
+    let cancelled = false
+
+    async function load() {
+      try {
+        const res = await api.me()
+        if (!cancelled) {
+          setUser(res?.user || null)
+        }
+      } catch {
+        if (!cancelled) {
+          setUser(null)
+        }
+      } finally {
+        if (!cancelled) {
+          setReady(true)
+        }
+      }
+    }
+
+    load()
+
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  async function login(email, password) {
+    const res = await api.login(email, password)
+    setUser(res?.user || null)
+    return res
+  }
+
+  async function register(email, username, password) {
+    const res = await api.register(email, username, password)
+    setUser(res?.user || null)
+    return res
+  }
+
+  async function logout() {
     try {
-      const r = await api.me();
-      setUser(r.user);
-    } catch {
-      setUser(null);
+      await api.logout()
     } finally {
-      setReady(true);
+      setUser(null)
     }
   }
 
-  useEffect(() => { refresh(); }, []);
+  async function refreshUser() {
+    const res = await api.me()
+    setUser(res?.user || null)
+    return res?.user || null
+  }
 
-  const value = useMemo(() => ({
-    user,
-    ready,
-    refresh,
-    login: async (email, password) => {
-      const r = await api.login(email, password);
-      setUser(r.user);
-      return r.user;
-    },
-    register: async (email, username, password) => {
-      const r = await api.register(email, username, password);
-      setUser(r.user);
-      return r.user;
-    },
-    logout: async () => {
-      await api.logout();
-      setUser(null);
-    },
-  }), [user, ready]);
+  function updateUser(nextUser) {
+    setUser(nextUser || null)
+  }
 
-  return <AuthCtx.Provider value={value}>{children}</AuthCtx.Provider>;
+  return (
+    <AuthContext.Provider
+      value={{
+        user,
+        ready,
+        setUser,
+        updateUser,
+        refreshUser,
+        login,
+        register,
+        logout
+      }}
+    >
+      {children}
+    </AuthContext.Provider>
+  )
 }
 
 export function useAuth() {
-  return useContext(AuthCtx);
+  const ctx = useContext(AuthContext)
+  if (!ctx) {
+    throw new Error("useAuth must be used inside AuthProvider")
+  }
+  return ctx
 }
