@@ -1,8 +1,8 @@
-import { useEffect, useMemo } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap, ZoomControl } from "react-leaflet"
 import L from "leaflet"
 import "leaflet-ant-path"
-import CommunityPanel from "../components/CommunityPanel"
+import { api } from "../lib/api"
 
 const tileUrls = {
   standard: "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
@@ -74,7 +74,234 @@ function getCommunityType(tipus) {
   return null
 }
 
-export default function MapView({ layerType, points, utvonalak, selected, myPos, onSelect, onOpenDetails, onMapClick }) {
+function Lightbox({ images, index, onClose, onPrev, onNext }) {
+  const active = images[index]
+
+  if (!active) return null
+
+  return (
+    <div className="img-lightbox" onClick={onClose}>
+      <div className="img-lightbox-inner" onClick={e => e.stopPropagation()}>
+        <button className="img-lightbox-close" type="button" onClick={onClose}>
+          <i className="fa-solid fa-xmark" />
+        </button>
+
+        {images.length > 1 && (
+          <>
+            <button className="img-lightbox-nav left" type="button" onClick={onPrev}>
+              <i className="fa-solid fa-chevron-left" />
+            </button>
+            <button className="img-lightbox-nav right" type="button" onClick={onNext}>
+              <i className="fa-solid fa-chevron-right" />
+            </button>
+          </>
+        )}
+
+        <img
+          src={`http://localhost:3001${active.fajl_utvonal}`}
+          alt=""
+          className="img-lightbox-image"
+        />
+      </div>
+    </div>
+  )
+}
+
+function PopupPreview({ item, onOpenDetails }) {
+  const [kepek, setKepek] = useState([])
+  const [kepIndex, setKepIndex] = useState(0)
+  const [atlag, setAtlag] = useState(null)
+  const [darab, setDarab] = useState(0)
+  const [loading, setLoading] = useState(true)
+  const [lightboxOpen, setLightboxOpen] = useState(false)
+
+  const communityType = getCommunityType(item.tipus)
+
+  useEffect(() => {
+    let cancelled = false
+
+    async function load() {
+      if (!communityType || !item?.id) return
+
+      try {
+        setLoading(true)
+
+        const [kepekRes, ertekelesRes] = await Promise.all([
+          api.kepek(communityType, item.id),
+          api.ertekelesek(communityType, item.id)
+        ])
+
+        if (cancelled) return
+
+        setKepek(Array.isArray(kepekRes) ? kepekRes : [])
+        setKepIndex(0)
+        setAtlag(ertekelesRes?.atlag ?? null)
+        setDarab(Number(ertekelesRes?.darab ?? 0))
+      } catch {
+        if (cancelled) return
+        setKepek([])
+        setAtlag(null)
+        setDarab(0)
+      } finally {
+        if (!cancelled) setLoading(false)
+      }
+    }
+
+    load()
+
+    return () => {
+      cancelled = true
+    }
+  }, [communityType, item])
+
+  function renderStars(value) {
+    const num = Number(value)
+    if (!Number.isFinite(num) || num <= 0) {
+      return (
+        <div className="gm-stars muted">
+          <i className="fa-solid fa-star" />
+          <span>Nincs még értékelés</span>
+        </div>
+      )
+    }
+
+    const rounded = Math.round(num)
+
+    return (
+      <div className="gm-stars">
+        <span className="gm-rating-number">{num.toFixed(1)}</span>
+        <div className="gm-star-icons">
+          {[1, 2, 3, 4, 5].map(i => (
+            <i
+              key={i}
+              className="fa-solid fa-star"
+              style={{ opacity: i <= rounded ? 1 : 0.28 }}
+            />
+          ))}
+        </div>
+        <span className="gm-rating-count">({darab})</span>
+      </div>
+    )
+  }
+
+  const activeImage = kepek.length ? kepek[kepIndex] : null
+
+  return (
+    <>
+      <div className="gm-popup">
+        <div className="gm-popup-closeTop">
+          <span />
+        </div>
+
+        <div className="gm-popup-media">
+          {!loading && activeImage && (
+            <>
+              <button
+                type="button"
+                className="gm-popup-imageBtn"
+                onClick={e => {
+                  e.preventDefault()
+                  e.stopPropagation()
+                  setLightboxOpen(true)
+                }}
+              >
+                <img
+                  src={`http://localhost:3001${activeImage.fajl_utvonal}`}
+                  alt={item.nev}
+                  className="gm-popup-image"
+                />
+              </button>
+
+              {kepek.length > 1 && (
+                <>
+                  <button
+                    type="button"
+                    className="gm-popup-nav left"
+                    onClick={e => {
+                      e.preventDefault()
+                      e.stopPropagation()
+                      setKepIndex(prev => (prev - 1 + kepek.length) % kepek.length)
+                    }}
+                  >
+                    <i className="fa-solid fa-chevron-left" />
+                  </button>
+
+                  <button
+                    type="button"
+                    className="gm-popup-nav right"
+                    onClick={e => {
+                      e.preventDefault()
+                      e.stopPropagation()
+                      setKepIndex(prev => (prev + 1) % kepek.length)
+                    }}
+                  >
+                    <i className="fa-solid fa-chevron-right" />
+                  </button>
+                </>
+              )}
+            </>
+          )}
+
+          {!loading && !activeImage && (
+            <div className="gm-popup-placeholder">
+              <i className="fa-regular fa-image" />
+              <span>Jelenleg nem található kép erről a helyről</span>
+            </div>
+          )}
+
+          {loading && (
+            <div className="gm-popup-placeholder">
+              <i className="fa-solid fa-spinner fa-spin" />
+              <span>Betöltés...</span>
+            </div>
+          )}
+        </div>
+
+        <div className="gm-popup-body">
+          <div className="gm-popup-title">{item.nev}</div>
+
+          {item.leiras && (
+            <div className="gm-popup-subtitle">{item.leiras}</div>
+          )}
+
+          <div className="gm-popup-rating">
+            {renderStars(atlag)}
+          </div>
+
+          <div className="gm-popup-footer">
+            <button
+              className="gm-popup-btn"
+              onClick={() => onOpenDetails?.(item.tipus, item.id)}
+            >
+              További infók
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {lightboxOpen && (
+        <Lightbox
+          images={kepek}
+          index={kepIndex}
+          onClose={() => setLightboxOpen(false)}
+          onPrev={() => setKepIndex(prev => (prev - 1 + kepek.length) % kepek.length)}
+          onNext={() => setKepIndex(prev => (prev + 1) % kepek.length)}
+        />
+      )}
+    </>
+  )
+}
+
+export default function MapView({
+  layerType,
+  points,
+  utvonalak,
+  selected,
+  myPos,
+  onSelect,
+  onOpenDetails,
+  onMapClick
+}) {
   const selectedRouteCoords = useMemo(() => {
     if (!selected || selected.type !== "utvonal") return null
 
@@ -86,11 +313,6 @@ export default function MapView({ layerType, points, utvonalak, selected, myPos,
     } catch {
       return null
     }
-  }, [selected, utvonalak])
-
-  const selectedRoute = useMemo(() => {
-    if (!selected || selected.type !== "utvonal") return null
-    return utvonalak.find(x => String(x.id) === String(selected.id)) || null
   }, [selected, utvonalak])
 
   const makeIcon = ikon =>
@@ -120,69 +342,22 @@ export default function MapView({ layerType, points, utvonalak, selected, myPos,
         }}
       >
         <ZoomControl position="topright" />
-
         <TileLayer url={tileUrls[layerType] ?? tileUrls.standard} maxZoom={20} />
 
-        {points.map(p => {
-          const communityType = getCommunityType(p.tipus)
-
-          return (
-            <Marker
-              key={`${p.tipus}-${p.id}`}
-              position={[p.lat, p.lng]}
-              icon={makeIcon(p.ikon)}
-              eventHandlers={{
-                click: () => onSelect?.({ type: p.tipus, id: p.id })
-              }}
-            >
-              <Popup maxWidth={430}>
-                <div style={{ minWidth: 270 }}>
-                  <h3 style={{ margin: "0 0 8px 0", color: "#007AFF" }}>
-                    {p.nev}
-                  </h3>
-
-                  <p style={{ margin: 0, color: "#666" }}>
-                    {p.leiras}
-                  </p>
-
-                  <div
-                    style={{
-                      marginTop: 8,
-                      padding: 8,
-                      background: "#f0f0f0",
-                      borderRadius: 8,
-                      fontSize: 12
-                    }}
-                  >
-                    <i className={`fas fa-${p.ikon}`} /> {p.tipus}
-                  </div>
-
-                  <div style={{ marginTop: 10 }}>
-                    <button
-                      onClick={() => onOpenDetails?.(p.tipus, p.id)}
-                      style={{
-                        width: "100%",
-                        border: 0,
-                        borderRadius: 10,
-                        padding: "10px 12px",
-                        background: "#007AFF",
-                        color: "#fff",
-                        cursor: "pointer",
-                        fontWeight: 600
-                      }}
-                    >
-                      További infó
-                    </button>
-                  </div>
-
-                  {communityType && (
-                    <CommunityPanel tipus={communityType} id={p.id} />
-                  )}
-                </div>
-              </Popup>
-            </Marker>
-          )
-        })}
+        {points.map(p => (
+          <Marker
+            key={`${p.tipus}-${p.id}`}
+            position={[p.lat, p.lng]}
+            icon={makeIcon(p.ikon)}
+            eventHandlers={{
+              click: () => onSelect?.({ type: p.tipus, id: p.id })
+            }}
+          >
+            <Popup maxWidth={360} className="gm-popup-wrap" closeButton>
+              <PopupPreview item={p} onOpenDetails={onOpenDetails} />
+            </Popup>
+          </Marker>
+        ))}
 
         {myPos && (
           <Marker
@@ -213,126 +388,6 @@ export default function MapView({ layerType, points, utvonalak, selected, myPos,
           myPos={myPos}
         />
       </MapContainer>
-
-      {selectedRoute && (
-        <div
-          style={{
-            position: "absolute",
-            left: 20,
-            bottom: 20,
-            zIndex: 800,
-            width: 380,
-            maxWidth: "calc(100% - 40px)",
-            background: "rgba(18,22,30,.96)",
-            border: "1px solid rgba(255,255,255,.10)",
-            borderRadius: 16,
-            padding: 16,
-            boxShadow: "0 20px 60px rgba(0,0,0,.35)",
-            color: "#fff",
-            backdropFilter: "blur(12px)"
-          }}
-        >
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "flex-start",
-              gap: 12
-            }}
-          >
-            <div>
-              <div style={{ fontSize: 18, fontWeight: 700, marginBottom: 6 }}>
-                {selectedRoute.cim}
-              </div>
-
-              <div style={{ fontSize: 13, opacity: 0.8, lineHeight: 1.5 }}>
-                {selectedRoute.leiras}
-              </div>
-            </div>
-
-            <button
-              onClick={() => onSelect?.(null)}
-              style={{
-                border: 0,
-                background: "transparent",
-                color: "rgba(255,255,255,.7)",
-                cursor: "pointer",
-                fontSize: 16
-              }}
-            >
-              ✕
-            </button>
-          </div>
-
-          <div
-            style={{
-              display: "flex",
-              gap: 8,
-              flexWrap: "wrap",
-              marginTop: 10
-            }}
-          >
-            {selectedRoute.hossz && (
-              <span
-                style={{
-                  fontSize: 12,
-                  padding: "6px 8px",
-                  borderRadius: 999,
-                  background: "rgba(255,255,255,.08)"
-                }}
-              >
-                {selectedRoute.hossz} km
-              </span>
-            )}
-
-            {selectedRoute.nehezseg && (
-              <span
-                style={{
-                  fontSize: 12,
-                  padding: "6px 8px",
-                  borderRadius: 999,
-                  background: "rgba(255,255,255,.08)"
-                }}
-              >
-                {selectedRoute.nehezseg}
-              </span>
-            )}
-
-            {selectedRoute.idotartam && (
-              <span
-                style={{
-                  fontSize: 12,
-                  padding: "6px 8px",
-                  borderRadius: 999,
-                  background: "rgba(255,255,255,.08)"
-                }}
-              >
-                {selectedRoute.idotartam}
-              </span>
-            )}
-          </div>
-
-          <div style={{ marginTop: 12 }}>
-            <button
-              onClick={() => onOpenDetails?.("utvonal", selectedRoute.id)}
-              style={{
-                width: "100%",
-                border: 0,
-                borderRadius: 10,
-                padding: "10px 12px",
-                background: "#007AFF",
-                color: "#fff",
-                cursor: "pointer",
-                fontWeight: 600
-              }}
-            >
-              További infó
-            </button>
-          </div>
-
-          <CommunityPanel tipus="utvonalak" id={selectedRoute.id} />
-        </div>
-      )}
     </div>
   )
 }

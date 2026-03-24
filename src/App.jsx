@@ -5,6 +5,7 @@ import MapPage from "./pages/MapPage"
 import Login from "./pages/Login"
 import Register from "./pages/Register"
 import Admin from "./pages/Admin"
+import Profile from "./pages/Profile"
 import { AuthProvider, useAuth } from "./lib/auth"
 import NotFound from "./pages/NotFound"
 import LoadingScreen from "./components/LoadingScreen"
@@ -16,6 +17,16 @@ function AdminRoute({ children }) {
   if (!user) return <Navigate to="/login" replace />
   if (user.role !== "admin") return <Navigate to="/terkep" replace />
   return children
+}
+
+function ProfileRedirect() {
+  const { user, ready } = useAuth()
+
+  if (!ready) return null
+  if (!user) return <Navigate to="/login" replace />
+  if (!user.username) return <Navigate to="/" replace />
+
+  return <Navigate to={`/u/${encodeURIComponent(user.username)}`} replace />
 }
 
 export default function App() {
@@ -39,6 +50,8 @@ export default function App() {
           <Route path="/terkep" element={<MapPage />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/profile" element={<ProfileRedirect />} />
+          <Route path="/u/:username" element={<Profile />} />
           <Route
             path="/admin"
             element={
@@ -47,6 +60,7 @@ export default function App() {
               </AdminRoute>
             }
           />
+          <Route path="/map" element={<MapPage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

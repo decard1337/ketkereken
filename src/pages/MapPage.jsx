@@ -25,7 +25,6 @@ export default function MapPage() {
   const [selected, setSelected] = useState(null)
 
   const [layerType, setLayerType] = useState("standard")
-
   const [myPos, setMyPos] = useState(null)
   const [locRequestTick, setLocRequestTick] = useState(0)
 
@@ -47,12 +46,12 @@ export default function MapPage() {
 
         if (cancelled) return
 
-        setMenu(m || [])
-        setUtvonalak(u || [])
-        setDestinaciok(d || [])
-        setEsemenyek(e || [])
-        setKolcsonzok(k || [])
-        setBlippek(b || [])
+        setMenu(Array.isArray(m) ? m : [])
+        setUtvonalak(Array.isArray(u) ? u : [])
+        setDestinaciok(Array.isArray(d) ? d : [])
+        setEsemenyek(Array.isArray(e) ? e : [])
+        setKolcsonzok(Array.isArray(k) ? k : [])
+        setBlippek(Array.isArray(b) ? b : [])
       } finally {
         if (!cancelled) setLoading(false)
       }
@@ -69,33 +68,37 @@ export default function MapPage() {
     const mapping = {
       utvonalak: "utvonalak",
       desztinaciok: "destinaciok",
+      destinaciok: "destinaciok",
       esemenyek: "esemenyek",
       "kölcsönzők": "kolcsonzok",
-      kolcsonzok: "kolcsonzok"
+      kolcsonzok: "kolcsonzok",
+      blippek: "blippek"
     }
 
-    const panel = mapping[link]
-    if (!panel) return
+    const p = mapping[String(link || "").toLowerCase()]
+    if (!p) return
 
-    setActivePanel(panel)
+    setActivePanel(p)
     setSelected(null)
     setSidebarOpen(false)
+    setLayerPanelOpen(false)
   }
 
-  function openDetailsFromMap(type, id) {
-    const mapping = {
-      utvonal: "utvonalak",
-      destinacio: "destinaciok",
-      esemeny: "esemenyek",
-      kolcsonzo: "kolcsonzok",
-      blipp: "blippek"
-    }
+  function panelFromType(type) {
+    if (type === "utvonal") return "utvonalak"
+    if (type === "destinacio") return "destinaciok"
+    if (type === "esemeny") return "esemenyek"
+    if (type === "kolcsonzo") return "kolcsonzok"
+    if (type === "blipp") return "blippek"
+    return null
+  }
 
-    const panel = mapping[type]
+  function handleOpenDetails(type, id) {
+    const panel = panelFromType(type)
     if (!panel) return
 
-    setSelected({ type, id })
     setActivePanel(panel)
+    setSelected({ type, id })
     setSidebarOpen(false)
     setLayerPanelOpen(false)
   }
@@ -105,15 +108,9 @@ export default function MapPage() {
     if (!navigator.geolocation) return
 
     navigator.geolocation.getCurrentPosition(
-      pos => {
-        setMyPos([pos.coords.latitude, pos.coords.longitude])
-      },
+      pos => setMyPos([pos.coords.latitude, pos.coords.longitude]),
       () => {},
-      {
-        enableHighAccuracy: true,
-        timeout: 10000,
-        maximumAge: 60000
-      }
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
     )
   }, [locRequestTick])
 
@@ -126,9 +123,7 @@ export default function MapPage() {
       lat: Number(x.lat),
       lng: Number(x.lng),
       ikon: x.ikon || "circle",
-      extra: {
-        kategoriatipus: x.tipus
-      }
+      extra: { kategoriatipus: x.tipus }
     }))
 
     const d = destinaciok.map(x => ({
@@ -139,10 +134,7 @@ export default function MapPage() {
       lat: Number(x.lat),
       lng: Number(x.lng),
       ikon: "map-marker-alt",
-      extra: {
-        ertekeles: x.ertekeles,
-        tipus: x.tipus
-      }
+      extra: { ertekeles: x.ertekeles, tipus: x.tipus }
     }))
 
     const e = esemenyek.map(x => ({
@@ -153,11 +145,7 @@ export default function MapPage() {
       lat: Number(x.lat),
       lng: Number(x.lng),
       ikon: "calendar-alt",
-      extra: {
-        datum: x.datum,
-        resztvevok: x.resztvevok,
-        tipus: x.tipus
-      }
+      extra: { datum: x.datum, resztvevok: x.resztvevok, tipus: x.tipus }
     }))
 
     const k = kolcsonzok.map(x => ({
@@ -168,23 +156,23 @@ export default function MapPage() {
       lat: Number(x.lat),
       lng: Number(x.lng),
       ikon: "bicycle",
-      extra: {
-        ar: x.ar,
-        telefon: x.telefon,
-        nyitvatartas: x.nyitvatartas
-      }
+      extra: { ar: x.ar, telefon: x.telefon, nyitvatartas: x.nyitvatartas }
     }))
 
     return [...b, ...d, ...e, ...k]
   }, [blippek, destinaciok, esemenyek, kolcsonzok])
 
-  const mapHasPanel = Boolean(activePanel)
-
   return (
-    <div id="app">
+    <div id="app" className="map-page-theme">
       {loading && <Splash />}
 
-      <div id="map-container" className={mapHasPanel ? "with-panel" : ""}>
+      <div id="map-container">
+        <div className="map-page-bg">
+          <div className="map-page-blob a" />
+          <div className="map-page-blob b" />
+          <div className="map-page-grid" />
+        </div>
+
         <MapView
           layerType={layerType}
           points={mapPoints}
@@ -192,16 +180,21 @@ export default function MapPage() {
           selected={selected}
           myPos={myPos}
           onSelect={setSelected}
-          onOpenDetails={openDetailsFromMap}
+          onOpenDetails={handleOpenDetails}
           onMapClick={() => {
             setLayerPanelOpen(false)
           }}
         />
 
         <div id="header">
-          <div id="floating-title">
-            <i className="fas fa-bicycle" />
-            Két keréken
+          <div id="floating-title" className="map-floating-title">
+            <div className="map-floating-mark">
+              <i className="fas fa-bicycle" />
+            </div>
+            <div className="map-floating-texts">
+              <span className="map-floating-name">Két Keréken</span>
+              <span className="map-floating-sub">Budapest</span>
+            </div>
           </div>
         </div>
 
@@ -223,8 +216,6 @@ export default function MapPage() {
         />
 
         <BottomControls
-          search=""
-          onSearch={() => {}}
           onMenu={() => {
             setSidebarOpen(true)
             setLayerPanelOpen(false)
@@ -244,10 +235,14 @@ export default function MapPage() {
           setActivePanel(null)
           setSelected(null)
         }}
+        onBackToList={() => {
+          setSelected(null)
+        }}
         utvonalak={utvonalak}
         destinaciok={destinaciok}
         esemenyek={esemenyek}
         kolcsonzok={kolcsonzok}
+        blippek={blippek}
         selected={selected}
         onSelect={setSelected}
       />

@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Gép: 127.0.0.1
--- Létrehozás ideje: 2026. Már 22. 11:58
+-- Létrehozás ideje: 2026. Már 24. 23:25
 -- Kiszolgáló verziója: 10.4.32-MariaDB
 -- PHP verzió: 8.2.12
 
@@ -82,7 +82,7 @@ INSERT INTO `destinaciok` (`id`, `nev`, `leiras`, `lat`, `lng`, `ertekeles`, `ti
 CREATE TABLE `ertekelesek` (
   `id` int(11) NOT NULL,
   `felhasznalo_id` int(11) NOT NULL,
-  `cel_tipus` enum('utvonal','esemeny','destinacio','kolcsonzo','blipp') NOT NULL,
+  `cel_tipus` enum('utvonalak','esemenyek','destinaciok','kolcsonzok','blippek') NOT NULL,
   `cel_id` int(11) NOT NULL,
   `pontszam` tinyint(4) NOT NULL,
   `szoveg` text DEFAULT NULL,
@@ -91,6 +91,14 @@ CREATE TABLE `ertekelesek` (
   `ellenorizte_admin` int(11) DEFAULT NULL,
   `ellenorizve` timestamp NULL DEFAULT NULL
 ) ;
+
+--
+-- A tábla adatainak kiíratása `ertekelesek`
+--
+
+INSERT INTO `ertekelesek` (`id`, `felhasznalo_id`, `cel_tipus`, `cel_id`, `pontszam`, `szoveg`, `statusz`, `letrehozva`, `ellenorizte_admin`, `ellenorizve`) VALUES
+(5, 3, 'utvonalak', 4, 5, 'szar', 'elfogadva', '2026-03-24 21:02:46', NULL, NULL),
+(6, 3, 'esemenyek', 1, 4, 'fasza', 'elfogadva', '2026-03-24 21:11:46', NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -132,16 +140,19 @@ CREATE TABLE `felhasznalok` (
   `felhasznalonev` varchar(80) DEFAULT NULL,
   `jelszo_hash` varchar(255) DEFAULT NULL,
   `rang` enum('felhasznalo','admin') DEFAULT NULL,
-  `letrehozva` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+  `profilkep` varchar(255) DEFAULT NULL,
+  `bio` text DEFAULT NULL,
+  `letrehozva` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `utolso_modositas` datetime DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- A tábla adatainak kiíratása `felhasznalok`
 --
 
-INSERT INTO `felhasznalok` (`id`, `email`, `felhasznalonev`, `jelszo_hash`, `rang`, `letrehozva`) VALUES
-(1, 'fiszfassz', 'admin', '$2b$12$1WMlrbrgT9WAmT8HQ5q5zOWKZX6cfdI3.7rhXGYEBlYlpE5rMncwu', 'admin', '2026-03-04 20:26:43'),
-(2, 'kutya@gmail.com', 'ferihegy', '$2b$12$iXpypqw073OmFRrMptqjkOuVZqLMT53fvjpARXRCBx5ZQ1JSJFnlm', 'admin', '2026-03-13 13:57:36');
+INSERT INTO `felhasznalok` (`id`, `email`, `felhasznalonev`, `jelszo_hash`, `rang`, `profilkep`, `bio`, `letrehozva`, `utolso_modositas`) VALUES
+(2, 'kutya@gmail.com', 'ferihegy', '$2b$12$iXpypqw073OmFRrMptqjkOuVZqLMT53fvjpARXRCBx5ZQ1JSJFnlm', 'admin', NULL, NULL, '2026-03-13 13:57:36', NULL),
+(3, 'admin@admin.hu', 'admin', '$2b$12$MjRryvCDiK8Dl.7ihZSjkeBSMdCnPq9AbC3aTemBlLAB3jXySY8wK', 'admin', '/uploads/1774200800566-903215822.webp', 'rawrrxdxdxd', '2026-03-22 18:06:30', '2026-03-22 18:33:20');
 
 -- --------------------------------------------------------
 
@@ -166,7 +177,7 @@ CREATE TABLE `kedvencek` (
 CREATE TABLE `kepek` (
   `id` int(11) NOT NULL,
   `felhasznalo_id` int(11) NOT NULL,
-  `cel_tipus` enum('utvonal','esemeny','destinacio','kolcsonzo','blipp') NOT NULL,
+  `cel_tipus` enum('utvonalak','esemenyek','destinaciok','kolcsonzok','blippek') NOT NULL,
   `cel_id` int(11) NOT NULL,
   `fajl_utvonal` varchar(255) NOT NULL,
   `leiras` varchar(255) DEFAULT NULL,
@@ -175,6 +186,14 @@ CREATE TABLE `kepek` (
   `ellenorizte_admin` int(11) DEFAULT NULL,
   `ellenorizve` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- A tábla adatainak kiíratása `kepek`
+--
+
+INSERT INTO `kepek` (`id`, `felhasznalo_id`, `cel_tipus`, `cel_id`, `fajl_utvonal`, `leiras`, `statusz`, `letrehozva`, `ellenorizte_admin`, `ellenorizve`) VALUES
+(1, 3, 'esemenyek', 1, '/uploads/1774386942264-900386885.png', 'legjobb hely', 'elfogadva', '2026-03-24 21:15:42', NULL, NULL),
+(2, 3, 'esemenyek', 1, '/uploads/1774387799044-363849412.jpeg', NULL, 'elfogadva', '2026-03-24 21:29:59', NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -278,7 +297,7 @@ ALTER TABLE `ertekelesek`
   ADD KEY `idx_cel` (`cel_tipus`,`cel_id`,`statusz`),
   ADD KEY `idx_felhasznalo` (`felhasznalo_id`),
   ADD KEY `idx_statusz` (`statusz`),
-  ADD KEY `ellenorizte_admin` (`ellenorizte_admin`);
+  ADD KEY `fk_ertekelesek_admin` (`ellenorizte_admin`);
 
 --
 -- A tábla indexei `esemenyek`
@@ -311,7 +330,7 @@ ALTER TABLE `kepek`
   ADD KEY `idx_cel` (`cel_tipus`,`cel_id`,`statusz`),
   ADD KEY `idx_felhasznalo` (`felhasznalo_id`),
   ADD KEY `idx_statusz` (`statusz`),
-  ADD KEY `ellenorizte_admin` (`ellenorizte_admin`);
+  ADD KEY `fk_kepek_admin` (`ellenorizte_admin`);
 
 --
 -- A tábla indexei `kolcsonzok`
@@ -363,7 +382,7 @@ ALTER TABLE `esemenyek`
 -- AUTO_INCREMENT a táblához `felhasznalok`
 --
 ALTER TABLE `felhasznalok`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT a táblához `kedvencek`
@@ -375,7 +394,7 @@ ALTER TABLE `kedvencek`
 -- AUTO_INCREMENT a táblához `kepek`
 --
 ALTER TABLE `kepek`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT a táblához `kolcsonzok`
@@ -404,7 +423,9 @@ ALTER TABLE `utvonalak`
 --
 ALTER TABLE `ertekelesek`
   ADD CONSTRAINT `ertekelesek_ibfk_1` FOREIGN KEY (`felhasznalo_id`) REFERENCES `felhasznalok` (`id`) ON DELETE CASCADE,
-  ADD CONSTRAINT `ertekelesek_ibfk_2` FOREIGN KEY (`ellenorizte_admin`) REFERENCES `felhasznalok` (`id`) ON DELETE SET NULL;
+  ADD CONSTRAINT `ertekelesek_ibfk_2` FOREIGN KEY (`ellenorizte_admin`) REFERENCES `felhasznalok` (`id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `fk_ertekelesek_admin` FOREIGN KEY (`ellenorizte_admin`) REFERENCES `felhasznalok` (`id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `fk_ertekelesek_felhasznalo` FOREIGN KEY (`felhasznalo_id`) REFERENCES `felhasznalok` (`id`) ON DELETE CASCADE;
 
 --
 -- Megkötések a táblához `esemenyek`
@@ -416,12 +437,15 @@ ALTER TABLE `esemenyek`
 -- Megkötések a táblához `kedvencek`
 --
 ALTER TABLE `kedvencek`
+  ADD CONSTRAINT `fk_kedvencek_felhasznalo` FOREIGN KEY (`felhasznalo_id`) REFERENCES `felhasznalok` (`id`) ON DELETE CASCADE,
   ADD CONSTRAINT `kedvencek_ibfk_1` FOREIGN KEY (`felhasznalo_id`) REFERENCES `felhasznalok` (`id`) ON DELETE CASCADE;
 
 --
 -- Megkötések a táblához `kepek`
 --
 ALTER TABLE `kepek`
+  ADD CONSTRAINT `fk_kepek_admin` FOREIGN KEY (`ellenorizte_admin`) REFERENCES `felhasznalok` (`id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `fk_kepek_felhasznalo` FOREIGN KEY (`felhasznalo_id`) REFERENCES `felhasznalok` (`id`) ON DELETE CASCADE,
   ADD CONSTRAINT `kepek_ibfk_1` FOREIGN KEY (`felhasznalo_id`) REFERENCES `felhasznalok` (`id`) ON DELETE CASCADE,
   ADD CONSTRAINT `kepek_ibfk_2` FOREIGN KEY (`ellenorizte_admin`) REFERENCES `felhasznalok` (`id`) ON DELETE SET NULL;
 COMMIT;
