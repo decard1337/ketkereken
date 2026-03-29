@@ -29,18 +29,14 @@ if (!fs.existsSync(UPLOAD_DIR)) {
 }
 
 const ADMIN_TABLES = {
-  menu: ["nev", "link", "statusz", "sorrend"],
   utvonalak: ["cim", "leiras", "koordinatak", "hossz", "nehezseg", "statusz", "idotartam", "szintkulonbseg"],
   destinaciok: ["nev", "leiras", "lat", "lng", "ertekeles", "tipus", "statusz"],
   esemenyek: ["nev", "leiras", "lat", "lng", "datum", "resztvevok", "tipus", "statusz", "utvonal_id"],
   kolcsonzok: ["nev", "cim", "lat", "lng", "ar", "telefon", "nyitvatartas", "statusz"],
-  blippek: ["nev", "leiras", "lat", "lng", "tipus", "ikon", "statusz"],
-  felhasznalok: ["email", "felhasznalonev", "rang", "profilkep", "bio", "letrehozva", "utolso_modositas"]
+  felhasznalok: ["email", "felhasznalonev", "rang", "profilkep", "bio"]
 }
 
-const PUBLIKUS_TABLEK = ["menu", "utvonalak", "destinaciok", "esemenyek", "kolcsonzok", "blippek"]
-
-const CEL_TIPUSOK = ["utvonalak", "destinaciok", "esemenyek", "kolcsonzok", "blippek"]
+const PUBLIKUS_TABLEK = ["utvonalak", "destinaciok", "esemenyek", "kolcsonzok"]
 
 const CEL_TIPUS_MAP = {
   utvonal: "utvonalak",
@@ -50,9 +46,7 @@ const CEL_TIPUS_MAP = {
   esemeny: "esemenyek",
   esemenyek: "esemenyek",
   kolcsonzo: "kolcsonzok",
-  kolcsonzok: "kolcsonzok",
-  blipp: "blippek",
-  blippek: "blippek"
+  kolcsonzok: "kolcsonzok"
 }
 
 app.use(cors({
@@ -60,7 +54,7 @@ app.use(cors({
   credentials: true
 }))
 
-app.use(express.json())
+app.use(express.json({ limit: "10mb" }))
 app.use(cookieParser())
 app.use("/uploads", express.static(UPLOAD_DIR))
 
@@ -167,6 +161,22 @@ async function getPublicUserByUsername(username) {
   return rows[0] || null
 }
 
+async function resolveCelTitle(cel_tipus, cel_id) {
+  const tabla = normalizalCelTipus(cel_tipus)
+  if (!tabla) return null
+
+  let sql = ""
+  if (tabla === "utvonalak") sql = "SELECT cim AS title FROM utvonalak WHERE id=? LIMIT 1"
+  if (tabla === "destinaciok") sql = "SELECT nev AS title FROM destinaciok WHERE id=? LIMIT 1"
+  if (tabla === "esemenyek") sql = "SELECT nev AS title FROM esemenyek WHERE id=? LIMIT 1"
+  if (tabla === "kolcsonzok") sql = "SELECT nev AS title FROM kolcsonzok WHERE id=? LIMIT 1"
+
+  if (!sql) return null
+
+  const [rows] = await pool.query(sql, [cel_id])
+  return rows[0]?.title || null
+}
+
 app.get("/health", (req, res) => {
   res.json({ ok: true })
 })
@@ -183,13 +193,20 @@ app.post("/api/auth/register", async (req, res) => {
       return res.status(400).json({ error: "Túl rövid jelszó" })
     }
 
-    const [exists] = await pool.query(
+    const [emailExists] = await pool.query(
       "SELECT id FROM felhasznalok WHERE email=? LIMIT 1",
       [email]
     )
-
-    if (exists.length) {
+    if (emailExists.length) {
       return res.status(409).json({ error: "Ez az email már foglalt" })
+    }
+
+    const [userExists] = await pool.query(
+      "SELECT id FROM felhasznalok WHERE felhasznalonev=? LIMIT 1",
+      [username]
+    )
+    if (userExists.length) {
+      return res.status(409).json({ error: "Ez a név már foglalt" })
     }
 
     const jelszo_hash = await bcrypt.hash(password, 12)
@@ -209,8 +226,7 @@ app.post("/api/auth/register", async (req, res) => {
       letrehozva: new Date().toISOString()
     }
 
-    const token = makeToken(tokenUser)
-    setAuthCookie(res, token)
+    setAuthCookie(res, makeToken(tokenUser))
 
     res.json({
       user: {
@@ -243,7 +259,6 @@ app.post("/api/auth/login", async (req, res) => {
     )
 
     const user = rows[0]
-
     if (!user) {
       return res.status(401).json({ error: "Hibás belépési adatok" })
     }
@@ -263,8 +278,7 @@ app.post("/api/auth/login", async (req, res) => {
       letrehozva: user.letrehozva
     }
 
-    const token = makeToken(tokenUser)
-    setAuthCookie(res, token)
+    setAuthCookie(res, makeToken(tokenUser))
 
     res.json({
       user: {
@@ -329,7 +343,7 @@ app.get("/api/u/:username", async (req, res) => {
       return res.status(404).json({ error: "Felhasználó nem található" })
     }
 
-    const [ertekelesek] = await pool.query(
+    const [ertekelesekRaw] = await pool.query(
       `SELECT id, cel_tipus, cel_id, pontszam, szoveg, statusz, letrehozva
        FROM ertekelesek
        WHERE felhasznalo_id=? AND statusz='elfogadva'
@@ -337,7 +351,7 @@ app.get("/api/u/:username", async (req, res) => {
       [viewedUser.id]
     )
 
-    const [kepek] = await pool.query(
+    const [kepekRaw] = await pool.query(
       `SELECT id, cel_tipus, cel_id, fajl_utvonal, leiras, statusz, letrehozva
        FROM kepek
        WHERE felhasznalo_id=? AND statusz='elfogadva'
@@ -345,12 +359,33 @@ app.get("/api/u/:username", async (req, res) => {
       [viewedUser.id]
     )
 
-    const [kedvencek] = await pool.query(
+    const [kedvencekRaw] = await pool.query(
       `SELECT id, cel_tipus, cel_id, letrehozva
        FROM kedvencek
        WHERE felhasznalo_id=?
        ORDER BY letrehozva DESC`,
       [viewedUser.id]
+    )
+
+    const ertekelesek = await Promise.all(
+      ertekelesekRaw.map(async e => ({
+        ...e,
+        title: await resolveCelTitle(e.cel_tipus, e.cel_id)
+      }))
+    )
+
+    const kepek = await Promise.all(
+      kepekRaw.map(async k => ({
+        ...k,
+        title: await resolveCelTitle(k.cel_tipus, k.cel_id)
+      }))
+    )
+
+    const kedvencek = await Promise.all(
+      kedvencekRaw.map(async k => ({
+        ...k,
+        title: await resolveCelTitle(k.cel_tipus, k.cel_id)
+      }))
     )
 
     res.json({
@@ -389,7 +424,6 @@ app.put("/api/profilom", authRequired, async (req, res) => {
     )
 
     const currentUser = currentRows[0]
-
     if (!currentUser) {
       return res.status(404).json({ error: "Felhasználó nem található" })
     }
@@ -399,7 +433,6 @@ app.put("/api/profilom", authRequired, async (req, res) => {
         "SELECT id FROM felhasznalok WHERE felhasznalonev=? LIMIT 1",
         [cleanUsername]
       )
-
       if (exists.length) {
         return res.status(409).json({ error: "Ez a név már foglalt" })
       }
@@ -417,7 +450,7 @@ app.put("/api/profilom", authRequired, async (req, res) => {
 
     const user = rows[0]
 
-    const token = makeToken({
+    setAuthCookie(res, makeToken({
       id: user.id,
       email: user.email,
       username: user.felhasznalonev,
@@ -425,9 +458,7 @@ app.put("/api/profilom", authRequired, async (req, res) => {
       profilkep: user.profilkep,
       bio: user.bio,
       letrehozva: user.letrehozva
-    })
-
-    setAuthCookie(res, token)
+    }))
 
     res.json({
       user: {
@@ -466,7 +497,7 @@ app.post("/api/profilom/profilkep", authRequired, upload.single("file"), async (
 
     const user = rows[0]
 
-    const token = makeToken({
+    setAuthCookie(res, makeToken({
       id: user.id,
       email: user.email,
       username: user.felhasznalonev,
@@ -474,9 +505,7 @@ app.post("/api/profilom/profilkep", authRequired, upload.single("file"), async (
       profilkep: user.profilkep,
       bio: user.bio,
       letrehozva: user.letrehozva
-    })
-
-    setAuthCookie(res, token)
+    }))
 
     res.json({
       user: {
@@ -537,7 +566,15 @@ app.get("/api/kedvencek", authRequired, async (req, res) => {
       "SELECT * FROM kedvencek WHERE felhasznalo_id=? ORDER BY letrehozva DESC",
       [req.user.id]
     )
-    res.json(rows)
+
+    const enriched = await Promise.all(
+      rows.map(async r => ({
+        ...r,
+        title: await resolveCelTitle(r.cel_tipus, r.cel_id)
+      }))
+    )
+
+    res.json(enriched)
   } catch (err) {
     console.error(err)
     res.status(500).json({ error: "Kedvencek lekérdezési hiba" })
@@ -591,7 +628,10 @@ app.post("/api/ertekelesek", authRequired, async (req, res) => {
 
     if (rows.length) {
       await pool.query(
-        "UPDATE ertekelesek SET pontszam=?, szoveg=?, cel_tipus=?, statusz='fuggoben', ellenorizte_admin=NULL, ellenorizve=NULL, letrehozva=NOW() WHERE id=?",
+        `UPDATE ertekelesek
+         SET pontszam=?, szoveg=?, cel_tipus=?, statusz='fuggoben',
+             ellenorizte_admin=NULL, ellenorizve=NULL, elutasitas_indok=NULL, letrehozva=NOW()
+         WHERE id=?`,
         [pont, szoveg || null, cel_tipus, rows[0].id]
       )
       return res.json({ ok: true, modositva: true })
@@ -631,7 +671,7 @@ app.put("/api/sajat/ertekelesek/:id", authRequired, async (req, res) => {
 
     await pool.query(
       `UPDATE ertekelesek
-       SET pontszam=?, szoveg=?, statusz='fuggoben', ellenorizte_admin=NULL, ellenorizve=NULL, letrehozva=NOW()
+       SET pontszam=?, szoveg=?, statusz='fuggoben', ellenorizte_admin=NULL, ellenorizve=NULL, elutasitas_indok=NULL, letrehozva=NOW()
        WHERE id=? AND felhasznalo_id=?`,
       [pont, szoveg || null, id, req.user.id]
     )
@@ -779,14 +819,21 @@ app.get("/api/kepek", async (req, res) => {
 app.get("/api/sajat/ertekelesek", authRequired, async (req, res) => {
   try {
     const [rows] = await pool.query(
-      `SELECT id, cel_tipus, cel_id, pontszam, szoveg, statusz, letrehozva
+      `SELECT id, cel_tipus, cel_id, pontszam, szoveg, statusz, elutasitas_indok, letrehozva
        FROM ertekelesek
        WHERE felhasznalo_id=?
        ORDER BY letrehozva DESC`,
       [req.user.id]
     )
 
-    res.json(rows)
+    const enriched = await Promise.all(
+      rows.map(async r => ({
+        ...r,
+        title: await resolveCelTitle(r.cel_tipus, r.cel_id)
+      }))
+    )
+
+    res.json(enriched)
   } catch (err) {
     console.error(err)
     res.status(500).json({ error: "Hiba" })
@@ -796,14 +843,21 @@ app.get("/api/sajat/ertekelesek", authRequired, async (req, res) => {
 app.get("/api/sajat/kepek", authRequired, async (req, res) => {
   try {
     const [rows] = await pool.query(
-      `SELECT id, cel_tipus, cel_id, fajl_utvonal, leiras, statusz, letrehozva
+      `SELECT id, cel_tipus, cel_id, fajl_utvonal, leiras, statusz, elutasitas_indok, letrehozva
        FROM kepek
        WHERE felhasznalo_id=?
        ORDER BY letrehozva DESC`,
       [req.user.id]
     )
 
-    res.json(rows)
+    const enriched = await Promise.all(
+      rows.map(async r => ({
+        ...r,
+        title: await resolveCelTitle(r.cel_tipus, r.cel_id)
+      }))
+    )
+
+    res.json(enriched)
   } catch (err) {
     console.error(err)
     res.status(500).json({ error: "Hiba" })
@@ -812,7 +866,7 @@ app.get("/api/sajat/kepek", authRequired, async (req, res) => {
 
 app.get("/api/admin/jovahagyando", adminRequired, async (req, res) => {
   try {
-    const [ertekelesek] = await pool.query(
+    const [ertekelesekRaw] = await pool.query(
       `SELECT e.id, e.cel_tipus, e.cel_id, e.pontszam, e.szoveg, e.letrehozva, u.felhasznalonev, u.email
        FROM ertekelesek e
        JOIN felhasznalok u ON u.id = e.felhasznalo_id
@@ -820,7 +874,7 @@ app.get("/api/admin/jovahagyando", adminRequired, async (req, res) => {
        ORDER BY e.letrehozva ASC`
     )
 
-    const [kepek] = await pool.query(
+    const [kepekRaw] = await pool.query(
       `SELECT k.id, k.cel_tipus, k.cel_id, k.fajl_utvonal, k.leiras, k.letrehozva, u.felhasznalonev, u.email
        FROM kepek k
        JOIN felhasznalok u ON u.id = k.felhasznalo_id
@@ -828,16 +882,23 @@ app.get("/api/admin/jovahagyando", adminRequired, async (req, res) => {
        ORDER BY k.letrehozva ASC`
     )
 
-    res.json({
-      ertekelesek: ertekelesek.map(e => ({
+    const ertekelesek = await Promise.all(
+      ertekelesekRaw.map(async e => ({
         ...e,
-        username: e.felhasznalonev
-      })),
-      kepek: kepek.map(k => ({
-        ...k,
-        username: k.felhasznalonev
+        username: e.felhasznalonev,
+        cel_title: await resolveCelTitle(e.cel_tipus, e.cel_id)
       }))
-    })
+    )
+
+    const kepek = await Promise.all(
+      kepekRaw.map(async k => ({
+        ...k,
+        username: k.felhasznalonev,
+        cel_title: await resolveCelTitle(k.cel_tipus, k.cel_id)
+      }))
+    )
+
+    res.json({ ertekelesek, kepek })
   } catch (err) {
     console.error(err)
     res.status(500).json({ error: "Jóváhagyandó lista hiba" })
@@ -854,14 +915,14 @@ app.post("/api/admin/elfogad", adminRequired, async (req, res) => {
 
     if (tipus === "ertekeles") {
       await pool.query(
-        "UPDATE ertekelesek SET statusz='elfogadva', ellenorizte_admin=?, ellenorizve=NOW() WHERE id=?",
+        "UPDATE ertekelesek SET statusz='elfogadva', ellenorizte_admin=?, ellenorizve=NOW(), elutasitas_indok=NULL WHERE id=?",
         [req.user.id, id]
       )
     }
 
     if (tipus === "kep") {
       await pool.query(
-        "UPDATE kepek SET statusz='elfogadva', ellenorizte_admin=?, ellenorizve=NOW() WHERE id=?",
+        "UPDATE kepek SET statusz='elfogadva', ellenorizte_admin=?, ellenorizve=NOW(), elutasitas_indok=NULL WHERE id=?",
         [req.user.id, id]
       )
     }
@@ -875,23 +936,25 @@ app.post("/api/admin/elfogad", adminRequired, async (req, res) => {
 
 app.post("/api/admin/elutasit", adminRequired, async (req, res) => {
   try {
-    const { tipus, id } = req.body
+    const { tipus, id, indok } = req.body
 
     if (!id || !["ertekeles", "kep"].includes(tipus)) {
       return res.status(400).json({ error: "Hibás kérés" })
     }
 
+    const reason = indok ? String(indok).slice(0, 1000) : null
+
     if (tipus === "ertekeles") {
       await pool.query(
-        "UPDATE ertekelesek SET statusz='elutasitva', ellenorizte_admin=?, ellenorizve=NOW() WHERE id=?",
-        [req.user.id, id]
+        "UPDATE ertekelesek SET statusz='elutasitva', ellenorizte_admin=?, ellenorizve=NOW(), elutasitas_indok=? WHERE id=?",
+        [req.user.id, reason, id]
       )
     }
 
     if (tipus === "kep") {
       await pool.query(
-        "UPDATE kepek SET statusz='elutasitva', ellenorizte_admin=?, ellenorizve=NOW() WHERE id=?",
-        [req.user.id, id]
+        "UPDATE kepek SET statusz='elutasitva', ellenorizte_admin=?, ellenorizve=NOW(), elutasitas_indok=? WHERE id=?",
+        [req.user.id, reason, id]
       )
     }
 
@@ -908,6 +971,13 @@ app.get("/api/admin/:tabla", adminRequired, async (req, res) => {
 
     if (!joTabla(tabla)) {
       return res.status(400).json({ error: "Ismeretlen tábla" })
+    }
+
+    if (tabla === "felhasznalok") {
+      const [rows] = await pool.query(
+        "SELECT id, email, felhasznalonev, rang, profilkep, bio, letrehozva FROM felhasznalok ORDER BY id ASC"
+      )
+      return res.json(rows)
     }
 
     const [rows] = await pool.query(`SELECT * FROM ${tabla} ORDER BY id ASC`)
@@ -928,10 +998,52 @@ app.post("/api/admin/:tabla", adminRequired, async (req, res) => {
 
     const allowed = ADMIN_TABLES[tabla]
     const body = req.body || {}
-
     const keys = allowed.filter(k => body[k] !== undefined)
+
     if (!keys.length) {
       return res.status(400).json({ error: "Nincs menthető mező" })
+    }
+
+    if (tabla === "felhasznalok") {
+      if (!body.email || !body.felhasznalonev) {
+        return res.status(400).json({ error: "Email és felhasználónév kötelező" })
+      }
+
+      const [mailExists] = await pool.query(
+        "SELECT id FROM felhasznalok WHERE email=? LIMIT 1",
+        [body.email]
+      )
+      if (mailExists.length) {
+        return res.status(409).json({ error: "Ez az email már foglalt" })
+      }
+
+      const [nameExists] = await pool.query(
+        "SELECT id FROM felhasznalok WHERE felhasznalonev=? LIMIT 1",
+        [body.felhasznalonev]
+      )
+      if (nameExists.length) {
+        return res.status(409).json({ error: "Ez a név már foglalt" })
+      }
+
+      const randomPassword = Math.random().toString(36).slice(-10) + "A1!"
+      const passwordHash = await bcrypt.hash(randomPassword, 12)
+
+      const insertKeys = [...keys, "jelszo_hash"]
+      const values = keys.map(k => body[k])
+
+      const qMarks = insertKeys.map(() => "?").join(", ")
+
+      const [result] = await pool.query(
+        `INSERT INTO felhasznalok (${insertKeys.join(", ")}) VALUES (${qMarks})`,
+        [...values, passwordHash]
+      )
+
+      const [rows] = await pool.query(
+        "SELECT id, email, felhasznalonev, rang, profilkep, bio, letrehozva FROM felhasznalok WHERE id=?",
+        [result.insertId]
+      )
+
+      return res.json(rows[0])
     }
 
     const values = keys.map(k => body[k])
@@ -960,10 +1072,32 @@ app.put("/api/admin/:tabla/:id", adminRequired, async (req, res) => {
 
     const allowed = ADMIN_TABLES[tabla]
     const body = req.body || {}
-
     const keys = allowed.filter(k => body[k] !== undefined)
+
     if (!keys.length) {
       return res.status(400).json({ error: "Nincs menthető mező" })
+    }
+
+    if (tabla === "felhasznalok") {
+      if (body.email !== undefined) {
+        const [mailExists] = await pool.query(
+          "SELECT id FROM felhasznalok WHERE email=? AND id<>? LIMIT 1",
+          [body.email, id]
+        )
+        if (mailExists.length) {
+          return res.status(409).json({ error: "Ez az email már foglalt" })
+        }
+      }
+
+      if (body.felhasznalonev !== undefined) {
+        const [nameExists] = await pool.query(
+          "SELECT id FROM felhasznalok WHERE felhasznalonev=? AND id<>? LIMIT 1",
+          [body.felhasznalonev, id]
+        )
+        if (nameExists.length) {
+          return res.status(409).json({ error: "Ez a név már foglalt" })
+        }
+      }
     }
 
     const setSql = keys.map(k => `${k}=?`).join(", ")
@@ -974,11 +1108,70 @@ app.put("/api/admin/:tabla/:id", adminRequired, async (req, res) => {
       [...values, id]
     )
 
+    if (tabla === "felhasznalok") {
+      const [rows] = await pool.query(
+        "SELECT id, email, felhasznalonev, rang, profilkep, bio, letrehozva FROM felhasznalok WHERE id=?",
+        [id]
+      )
+      return res.json(rows[0])
+    }
+
     const [rows] = await pool.query(`SELECT * FROM ${tabla} WHERE id=?`, [id])
     res.json(rows[0])
   } catch (err) {
     console.error(err)
     res.status(500).json({ error: "Mentési hiba" })
+  }
+})
+
+app.put("/api/admin/felhasznalok/:id/jelszo", adminRequired, async (req, res) => {
+  try {
+    const { id } = req.params
+    const { newPassword } = req.body || {}
+
+    const password = String(newPassword || "")
+    if (password.length < 6) {
+      return res.status(400).json({ error: "Az új jelszó túl rövid" })
+    }
+
+    const hash = await bcrypt.hash(password, 12)
+
+    await pool.query(
+      "UPDATE felhasznalok SET jelszo_hash=? WHERE id=?",
+      [hash, id]
+    )
+
+    res.json({ ok: true })
+  } catch (err) {
+    console.error(err)
+    res.status(500).json({ error: "Jelszó módosítási hiba" })
+  }
+})
+
+app.post("/api/admin/felhasznalok/:id/profilkep", adminRequired, upload.single("file"), async (req, res) => {
+  try {
+    const { id } = req.params
+
+    if (!req.file) {
+      return res.status(400).json({ error: "Nincs fájl" })
+    }
+
+    const fajlUt = `/uploads/${req.file.filename}`
+
+    await pool.query(
+      "UPDATE felhasznalok SET profilkep=? WHERE id=?",
+      [fajlUt, id]
+    )
+
+    const [rows] = await pool.query(
+      "SELECT id, email, felhasznalonev, rang, profilkep, bio, letrehozva FROM felhasznalok WHERE id=?",
+      [id]
+    )
+
+    res.json(rows[0])
+  } catch (err) {
+    console.error(err)
+    res.status(500).json({ error: "Profilkép módosítási hiba" })
   }
 })
 
@@ -988,6 +1181,10 @@ app.delete("/api/admin/:tabla/:id", adminRequired, async (req, res) => {
 
     if (!joTabla(tabla)) {
       return res.status(400).json({ error: "Ismeretlen tábla" })
+    }
+
+    if (tabla === "felhasznalok" && Number(id) === Number(req.user.id)) {
+      return res.status(400).json({ error: "Saját admin felhasználót nem törölheted" })
     }
 
     await pool.query(`DELETE FROM ${tabla} WHERE id=?`, [id])
@@ -1006,15 +1203,10 @@ app.get("/api/:tabla", async (req, res) => {
       return res.status(400).json({ error: "Ismeretlen tábla" })
     }
 
-    let sql = `SELECT * FROM ${tabla}`
+    const [rows] = await pool.query(
+      `SELECT * FROM ${tabla} WHERE statusz='aktiv' ORDER BY id ASC`
+    )
 
-    if (tabla === "menu") {
-      sql += " WHERE statusz='aktiv' ORDER BY sorrend ASC, id ASC"
-    } else if (["utvonalak", "destinaciok", "esemenyek", "kolcsonzok", "blippek"].includes(tabla)) {
-      sql += " WHERE statusz='aktiv' ORDER BY id ASC"
-    }
-
-    const [rows] = await pool.query(sql)
     res.json(rows)
   } catch (err) {
     console.error(err)
