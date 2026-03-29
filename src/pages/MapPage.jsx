@@ -8,15 +8,21 @@ import LayerPanel from "../ui/LayerPanel"
 import Panels from "../ui/Panels"
 import MapView from "../ui/MapView"
 
+const STATIC_MENU = [
+  { id: 1, nev: "Útvonalak", link: "utvonalak", ikon: "route" },
+  { id: 2, nev: "Desztinációk", link: "destinaciok", ikon: "map-marker-alt" },
+  { id: 3, nev: "Események", link: "esemenyek", ikon: "calendar-alt" },
+  { id: 4, nev: "Kölcsönzők", link: "kolcsonzok", ikon: "bicycle" }
+]
+
 export default function MapPage() {
   const [loading, setLoading] = useState(true)
 
-  const [menu, setMenu] = useState([])
+  const [menu] = useState(STATIC_MENU)
   const [utvonalak, setUtvonalak] = useState([])
   const [destinaciok, setDestinaciok] = useState([])
   const [esemenyek, setEsemenyek] = useState([])
   const [kolcsonzok, setKolcsonzok] = useState([])
-  const [blippek, setBlippek] = useState([])
 
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [layerPanelOpen, setLayerPanelOpen] = useState(false)
@@ -35,23 +41,19 @@ export default function MapPage() {
       try {
         setLoading(true)
 
-        const [m, u, d, e, k, b] = await Promise.all([
-          api.menu(),
+        const [u, d, e, k] = await Promise.all([
           api.utvonalak(),
           api.destinaciok(),
           api.esemenyek(),
-          api.kolcsonzok(),
-          api.blippek()
+          api.kolcsonzok()
         ])
 
         if (cancelled) return
 
-        setMenu(Array.isArray(m) ? m : [])
         setUtvonalak(Array.isArray(u) ? u : [])
         setDestinaciok(Array.isArray(d) ? d : [])
         setEsemenyek(Array.isArray(e) ? e : [])
         setKolcsonzok(Array.isArray(k) ? k : [])
-        setBlippek(Array.isArray(b) ? b : [])
       } finally {
         if (!cancelled) setLoading(false)
       }
@@ -71,8 +73,7 @@ export default function MapPage() {
       destinaciok: "destinaciok",
       esemenyek: "esemenyek",
       "kölcsönzők": "kolcsonzok",
-      kolcsonzok: "kolcsonzok",
-      blippek: "blippek"
+      kolcsonzok: "kolcsonzok"
     }
 
     const p = mapping[String(link || "").toLowerCase()]
@@ -89,7 +90,6 @@ export default function MapPage() {
     if (type === "destinacio") return "destinaciok"
     if (type === "esemeny") return "esemenyek"
     if (type === "kolcsonzo") return "kolcsonzok"
-    if (type === "blipp") return "blippek"
     return null
   }
 
@@ -115,17 +115,6 @@ export default function MapPage() {
   }, [locRequestTick])
 
   const mapPoints = useMemo(() => {
-    const b = blippek.map(x => ({
-      id: x.id,
-      tipus: "blipp",
-      nev: x.nev,
-      leiras: x.leiras,
-      lat: Number(x.lat),
-      lng: Number(x.lng),
-      ikon: x.ikon || "circle",
-      extra: { kategoriatipus: x.tipus }
-    }))
-
     const d = destinaciok.map(x => ({
       id: x.id,
       tipus: "destinacio",
@@ -159,8 +148,8 @@ export default function MapPage() {
       extra: { ar: x.ar, telefon: x.telefon, nyitvatartas: x.nyitvatartas }
     }))
 
-    return [...b, ...d, ...e, ...k]
-  }, [blippek, destinaciok, esemenyek, kolcsonzok])
+    return [...d, ...e, ...k]
+  }, [destinaciok, esemenyek, kolcsonzok])
 
   return (
     <div id="app" className="map-page-theme">
@@ -242,7 +231,6 @@ export default function MapPage() {
         destinaciok={destinaciok}
         esemenyek={esemenyek}
         kolcsonzok={kolcsonzok}
-        blippek={blippek}
         selected={selected}
         onSelect={setSelected}
       />

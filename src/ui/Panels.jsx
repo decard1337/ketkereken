@@ -9,7 +9,6 @@ export default function Panels({
   destinaciok,
   esemenyek,
   kolcsonzok,
-  blippek,
   selected,
   onSelect
 }) {
@@ -46,13 +45,6 @@ export default function Panels({
     icon = "bicycle"
     items = kolcsonzok
     type = "kolcsonzo"
-  }
-
-  if (activePanel === "blippek") {
-    title = "Blippek"
-    icon = "layer-group"
-    items = blippek || []
-    type = "blipp"
   }
 
   const detailsOpen = Boolean(selected && selected.type === type)

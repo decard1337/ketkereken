@@ -70,41 +70,7 @@ function getCommunityType(tipus) {
   if (tipus === "destinacio") return "destinaciok"
   if (tipus === "esemeny") return "esemenyek"
   if (tipus === "kolcsonzo") return "kolcsonzok"
-  if (tipus === "blipp") return "blippek"
   return null
-}
-
-function Lightbox({ images, index, onClose, onPrev, onNext }) {
-  const active = images[index]
-
-  if (!active) return null
-
-  return (
-    <div className="img-lightbox" onClick={onClose}>
-      <div className="img-lightbox-inner" onClick={e => e.stopPropagation()}>
-        <button className="img-lightbox-close" type="button" onClick={onClose}>
-          <i className="fa-solid fa-xmark" />
-        </button>
-
-        {images.length > 1 && (
-          <>
-            <button className="img-lightbox-nav left" type="button" onClick={onPrev}>
-              <i className="fa-solid fa-chevron-left" />
-            </button>
-            <button className="img-lightbox-nav right" type="button" onClick={onNext}>
-              <i className="fa-solid fa-chevron-right" />
-            </button>
-          </>
-        )}
-
-        <img
-          src={`http://localhost:3001${active.fajl_utvonal}`}
-          alt=""
-          className="img-lightbox-image"
-        />
-      </div>
-    </div>
-  )
 }
 
 function PopupPreview({ item, onOpenDetails }) {
@@ -113,7 +79,6 @@ function PopupPreview({ item, onOpenDetails }) {
   const [atlag, setAtlag] = useState(null)
   const [darab, setDarab] = useState(0)
   const [loading, setLoading] = useState(true)
-  const [lightboxOpen, setLightboxOpen] = useState(false)
 
   const communityType = getCommunityType(item.tipus)
 
@@ -156,6 +121,7 @@ function PopupPreview({ item, onOpenDetails }) {
 
   function renderStars(value) {
     const num = Number(value)
+
     if (!Number.isFinite(num) || num <= 0) {
       return (
         <div className="gm-stars muted">
@@ -187,59 +153,31 @@ function PopupPreview({ item, onOpenDetails }) {
   const activeImage = kepek.length ? kepek[kepIndex] : null
 
   return (
-    <>
-      <div className="gm-popup">
-        <div className="gm-popup-closeTop">
-          <span />
-        </div>
+    <div className="gm-popup">
+      <div className="gm-popup-media">
+        {kepek.length > 1 && !loading && (
+          <button
+            type="button"
+            className="gm-popup-nav left"
+            onClick={e => {
+              e.preventDefault()
+              e.stopPropagation()
+              setKepIndex(prev => (prev - 1 + kepek.length) % kepek.length)
+            }}
+          >
+            <i className="fa-solid fa-chevron-left" />
+          </button>
+        )}
 
-        <div className="gm-popup-media">
+        <div className="gm-popup-imageFrame">
           {!loading && activeImage && (
-            <>
-              <button
-                type="button"
-                className="gm-popup-imageBtn"
-                onClick={e => {
-                  e.preventDefault()
-                  e.stopPropagation()
-                  setLightboxOpen(true)
-                }}
-              >
-                <img
-                  src={`http://localhost:3001${activeImage.fajl_utvonal}`}
-                  alt={item.nev}
-                  className="gm-popup-image"
-                />
-              </button>
-
-              {kepek.length > 1 && (
-                <>
-                  <button
-                    type="button"
-                    className="gm-popup-nav left"
-                    onClick={e => {
-                      e.preventDefault()
-                      e.stopPropagation()
-                      setKepIndex(prev => (prev - 1 + kepek.length) % kepek.length)
-                    }}
-                  >
-                    <i className="fa-solid fa-chevron-left" />
-                  </button>
-
-                  <button
-                    type="button"
-                    className="gm-popup-nav right"
-                    onClick={e => {
-                      e.preventDefault()
-                      e.stopPropagation()
-                      setKepIndex(prev => (prev + 1) % kepek.length)
-                    }}
-                  >
-                    <i className="fa-solid fa-chevron-right" />
-                  </button>
-                </>
-              )}
-            </>
+            <div className="gm-popup-imageBtn">
+              <img
+                src={`http://localhost:3001${activeImage.fajl_utvonal}`}
+                alt={item.nev}
+                className="gm-popup-image"
+              />
+            </div>
           )}
 
           {!loading && !activeImage && (
@@ -257,38 +195,42 @@ function PopupPreview({ item, onOpenDetails }) {
           )}
         </div>
 
-        <div className="gm-popup-body">
-          <div className="gm-popup-title">{item.nev}</div>
-
-          {item.leiras && (
-            <div className="gm-popup-subtitle">{item.leiras}</div>
-          )}
-
-          <div className="gm-popup-rating">
-            {renderStars(atlag)}
-          </div>
-
-          <div className="gm-popup-footer">
-            <button
-              className="gm-popup-btn"
-              onClick={() => onOpenDetails?.(item.tipus, item.id)}
-            >
-              További infók
-            </button>
-          </div>
-        </div>
+        {kepek.length > 1 && !loading && (
+          <button
+            type="button"
+            className="gm-popup-nav right"
+            onClick={e => {
+              e.preventDefault()
+              e.stopPropagation()
+              setKepIndex(prev => (prev + 1) % kepek.length)
+            }}
+          >
+            <i className="fa-solid fa-chevron-right" />
+          </button>
+        )}
       </div>
 
-      {lightboxOpen && (
-        <Lightbox
-          images={kepek}
-          index={kepIndex}
-          onClose={() => setLightboxOpen(false)}
-          onPrev={() => setKepIndex(prev => (prev - 1 + kepek.length) % kepek.length)}
-          onNext={() => setKepIndex(prev => (prev + 1) % kepek.length)}
-        />
-      )}
-    </>
+      <div className="gm-popup-body">
+        <div className="gm-popup-title">{item.nev}</div>
+
+        {item.leiras && (
+          <div className="gm-popup-subtitle">{item.leiras}</div>
+        )}
+
+        <div className="gm-popup-rating">
+          {renderStars(atlag)}
+        </div>
+
+        <div className="gm-popup-footer">
+          <button
+            className="gm-popup-btn"
+            onClick={() => onOpenDetails?.(item.tipus, item.id)}
+          >
+            További infók
+          </button>
+        </div>
+      </div>
+    </div>
   )
 }
 

@@ -31,12 +31,10 @@ async function req(path, options = {}) {
 }
 
 export const api = {
-  menu: () => req("/menu"),
   utvonalak: () => req("/utvonalak"),
   destinaciok: () => req("/destinaciok"),
   esemenyek: () => req("/esemenyek"),
   kolcsonzok: () => req("/kolcsonzok"),
-  blippek: () => req("/blippek"),
 
   register: (email, username, password) =>
     req("/auth/register", { method: "POST", body: { email, username, password } }),
@@ -73,6 +71,21 @@ export const api = {
 
   adminDelete: (tabla, id) =>
     req(`/admin/${encodeURIComponent(tabla)}/${encodeURIComponent(id)}`, { method: "DELETE" }),
+
+  adminResetPassword: (id, newPassword) =>
+    req(`/admin/felhasznalok/${encodeURIComponent(id)}/jelszo`, {
+      method: "PUT",
+      body: { newPassword }
+    }),
+
+  adminUploadUserProfileImage: (id, file) => {
+    const fd = new FormData()
+    fd.append("file", file)
+    return req(`/admin/felhasznalok/${encodeURIComponent(id)}/profilkep`, {
+      method: "POST",
+      formData: fd
+    })
+  },
 
   toggleKedvenc: (cel_tipus, cel_id) =>
     req("/kedvencek/toggle", { method: "POST", body: { cel_tipus, cel_id } }),
@@ -118,8 +131,8 @@ export const api = {
   adminElfogad: (tipus, id) =>
     req("/admin/elfogad", { method: "POST", body: { tipus, id } }),
 
-  adminElutasit: (tipus, id) =>
-    req("/admin/elutasit", { method: "POST", body: { tipus, id } }),
+  adminElutasit: (tipus, id, indok = "") =>
+    req("/admin/elutasit", { method: "POST", body: { tipus, id, indok } }),
 
   sajatErtekelesek: () =>
     req("/sajat/ertekelesek"),

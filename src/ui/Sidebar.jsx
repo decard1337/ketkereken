@@ -1,63 +1,33 @@
-import { iconForMenu } from "../lib/icons";
-import { Link } from "react-router-dom";
-import { useAuth } from "../lib/auth";
-
 export default function Sidebar({ open, menu, onClose, onOpen, onMenuClick }) {
-  const { user, logout } = useAuth();
-
   return (
     <>
-      <div id="sidebar" className={open ? "" : "closed"}>
-        <button id="close-btn" onClick={onClose}>✕</button>
+      <aside id="sidebar" className={open ? "" : "closed"}>
+        <button id="close-btn" onClick={onClose} title="Bezárás">
+          <i className="fas fa-times" />
+        </button>
 
         <div className="menu-list">
-          {menu.map((m) => (
+          {menu.map(item => (
             <div
-              key={m.id}
+              key={item.id}
               className="item"
-              onClick={() => onMenuClick?.(m.link)}
+              onClick={() => onMenuClick?.(item.link)}
             >
               <div className="item-icon">
-                <i className={`fas fa-${iconForMenu(m.link)}`} />
+                <i className={`fas fa-${item.ikon || "circle"}`} />
               </div>
-              <span>{m.nev}</span>
+
+              <div>{item.nev}</div>
             </div>
           ))}
-
-          {user?.role === "admin" && (
-            <Link to="/admin" className="item" onClick={onClose} style={{ textDecoration: "none" }}>
-              <div className="item-icon">
-                <i className="fas fa-user-shield" />
-              </div>
-              <span>Admin panel</span>
-            </Link>
-          )}
-
-          {!user && (
-            <Link to="/login" className="item" onClick={onClose} style={{ textDecoration: "none" }}>
-              <div className="item-icon">
-                <i className="fas fa-right-to-bracket" />
-              </div>
-              <span>Bejelentkezés</span>
-            </Link>
-          )}
-
-          {user && (
-            <div className="item" onClick={async () => { await logout(); onClose(); }}>
-              <div className="item-icon">
-                <i className="fas fa-right-from-bracket" />
-              </div>
-              <span>Kijelentkezés</span>
-            </div>
-          )}
         </div>
-      </div>
+      </aside>
 
       {!open && (
-        <div id="reopen-tab" onClick={onOpen}>
-          <span>&lt;</span>
-        </div>
+        <button id="reopen-tab" onClick={onOpen} title="Menü megnyitása">
+          <span>›</span>
+        </button>
       )}
     </>
-  );
+  )
 }

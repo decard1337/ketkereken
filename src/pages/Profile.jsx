@@ -9,7 +9,6 @@ function labelForType(tipus) {
   if (tipus === "destinaciok") return "Desztinációk"
   if (tipus === "esemenyek") return "Események"
   if (tipus === "kolcsonzok") return "Kölcsönzők"
-  if (tipus === "blippek") return "Blippek"
   return tipus
 }
 
@@ -50,8 +49,7 @@ export default function Profile() {
     utvonalak: [],
     destinaciok: [],
     esemenyek: [],
-    kolcsonzok: [],
-    blippek: []
+    kolcsonzok: []
   })
 
   const [editOpen, setEditOpen] = useState(false)
@@ -74,7 +72,7 @@ export default function Profile() {
   const isOwnProfile = Boolean(user && username && user.username === username)
 
   useEffect(() => {
-    if (!username) return
+    if (!username || !ready) return
 
     let cancelled = false
 
@@ -87,12 +85,11 @@ export default function Profile() {
         setErtekelesek([])
         setKepek([])
 
-        const [utvRes, destRes, eseRes, kolRes, bliRes] = await Promise.all([
+        const [utvRes, destRes, eseRes, kolRes] = await Promise.all([
           api.utvonalak(),
           api.destinaciok(),
           api.esemenyek(),
-          api.kolcsonzok(),
-          api.blippek()
+          api.kolcsonzok()
         ])
 
         if (cancelled) return
@@ -101,8 +98,7 @@ export default function Profile() {
           utvonalak: Array.isArray(utvRes) ? utvRes : [],
           destinaciok: Array.isArray(destRes) ? destRes : [],
           esemenyek: Array.isArray(eseRes) ? eseRes : [],
-          kolcsonzok: Array.isArray(kolRes) ? kolRes : [],
-          blippek: Array.isArray(bliRes) ? bliRes : []
+          kolcsonzok: Array.isArray(kolRes) ? kolRes : []
         })
 
         if (isOwnProfile && user) {
@@ -145,9 +141,7 @@ export default function Profile() {
       }
     }
 
-    if (ready) {
-      load()
-    }
+    load()
 
     return () => {
       cancelled = true
@@ -214,8 +208,7 @@ export default function Profile() {
       utvonalak: resolvedFavorites.filter(x => x.cel_tipus === "utvonalak"),
       destinaciok: resolvedFavorites.filter(x => x.cel_tipus === "destinaciok"),
       esemenyek: resolvedFavorites.filter(x => x.cel_tipus === "esemenyek"),
-      kolcsonzok: resolvedFavorites.filter(x => x.cel_tipus === "kolcsonzok"),
-      blippek: resolvedFavorites.filter(x => x.cel_tipus === "blippek")
+      kolcsonzok: resolvedFavorites.filter(x => x.cel_tipus === "kolcsonzok")
     }
   }, [resolvedFavorites])
 
@@ -328,11 +321,16 @@ export default function Profile() {
               <span>Térkép</span>
             </a>
 
-            {isOwnProfile && (
+            {user ? (
               <button className="prf-btn primary" onClick={logout}>
                 <i className="fa-solid fa-right-from-bracket" />
                 <span>Kijelentkezés</span>
               </button>
+            ) : (
+              <a href="/login" className="prf-btn primary">
+                <i className="fa-solid fa-right-to-bracket" />
+                <span>Bejelentkezés</span>
+              </a>
             )}
           </div>
         </div>
@@ -578,6 +576,12 @@ export default function Profile() {
                               <div className="prf-cardText">{e.szoveg}</div>
                             )}
 
+                            {isOwnProfile && e.elutasitas_indok && (
+                              <div className="prf-formMsg err" style={{ marginTop: 12 }}>
+                                Elutasítás indoka: {e.elutasitas_indok}
+                              </div>
+                            )}
+
                             {isOwnProfile && (
                               <div style={{ display: "flex", gap: 10, marginTop: 14 }}>
                                 <button
@@ -640,6 +644,12 @@ export default function Profile() {
 
                         {k.leiras && (
                           <div className="prf-cardText">{k.leiras}</div>
+                        )}
+
+                        {isOwnProfile && k.elutasitas_indok && (
+                          <div className="prf-formMsg err" style={{ marginTop: 12 }}>
+                            Elutasítás indoka: {k.elutasitas_indok}
+                          </div>
                         )}
 
                         <div className="prf-cardBottom">

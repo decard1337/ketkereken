@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react"
+import { createPortal } from "react-dom"
 import { api } from "../lib/api"
 import { useAuth } from "../lib/auth"
 
@@ -7,7 +8,6 @@ function getCommunityType(type) {
   if (type === "destinacio") return "destinaciok"
   if (type === "esemeny") return "esemenyek"
   if (type === "kolcsonzo") return "kolcsonzok"
-  if (type === "blipp") return "blippek"
   return null
 }
 
@@ -16,7 +16,6 @@ function normalizeSelectedType(type) {
   if (type === "destinacio") return "destinacio"
   if (type === "esemeny") return "esemeny"
   if (type === "kolcsonzo") return "kolcsonzo"
-  if (type === "blipp") return "blipp"
   return ""
 }
 
@@ -36,7 +35,7 @@ function Lightbox({ images, index, onClose, onPrev, onNext }) {
 
   if (!active) return null
 
-  return (
+  return createPortal(
     <div className="img-lightbox" onClick={onClose}>
       <div className="img-lightbox-inner" onClick={e => e.stopPropagation()}>
         <button className="img-lightbox-close" type="button" onClick={onClose}>
@@ -60,7 +59,8 @@ function Lightbox({ images, index, onClose, onPrev, onNext }) {
           className="img-lightbox-image"
         />
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }
 
@@ -327,21 +327,6 @@ export default function PanelDetails({ type, items, selected }) {
       )
     }
 
-    if (type === "blipp") {
-      return (
-        <div className="reszletek-grid">
-          <div className="reszletek-item">
-            <div className="reszletek-ertek">{item.tipus || "—"}</div>
-            <div className="reszletek-cimke">Típus</div>
-          </div>
-          <div className="reszletek-item">
-            <div className="reszletek-ertek">{item.ikon || "—"}</div>
-            <div className="reszletek-cimke">Ikon</div>
-          </div>
-        </div>
-      )
-    }
-
     return null
   }
 
@@ -366,7 +351,7 @@ export default function PanelDetails({ type, items, selected }) {
     <>
       <div className="panel-reszletek active">
         <h3 className="reszletek-cim">
-          <i className={`fas fa-${type === "utvonal" ? "route" : type === "destinacio" ? "map-marker-alt" : type === "esemeny" ? "calendar-alt" : type === "kolcsonzo" ? "bicycle" : "layer-group"}`} />
+          <i className={`fas fa-${type === "utvonal" ? "route" : type === "destinacio" ? "map-marker-alt" : type === "esemeny" ? "calendar-alt" : "bicycle"}`} />
           {title}
         </h3>
 
