@@ -1,12 +1,10 @@
 <div align="center">
-
+<p align="center">
+  <img src="./docs/logo_fixed.png" alt="Két Keréken logó" width="480" />
+</p>
 # Két Keréken
 
 ### Kerékpáros útvonalak, helyek és események egy modern térképes platformon
-
-<p align="center">
-  <img src="./docs/logo.png" alt="Két Keréken logó" width="120" />
-</p>
 
 <p align="center">
   Egy térképalapú webalkalmazás, amely segít bringás útvonalak, érdekes helyek,
@@ -17,8 +15,6 @@
   <a href="#áttekintés">Áttekintés</a> •
   <a href="#fő-funkciók">Fő funkciók</a> •
   <a href="#képernyőképek">Képernyőképek</a> •
-  <a href="#tech-stack">Tech stack</a> •
-  <a href="#telepítés">Telepítés</a> •
   <a href="#projekt-struktúra">Projekt struktúra</a>
 </p>
 
@@ -80,43 +76,34 @@ Az alkalmazás felhasználói és admin oldallal is rendelkezik, így nemcsak b�
 ## Képernyőképek
 
 ### Főoldal
-> Ide jön majd a főoldal screenshotja
 
-```md
-![Főoldal](./docs/screenshots/home.png)
-```
+<img src="./docs/screenshots/fooldal_teszt.png" alt="Fooldal" width="480" />
 
 ### Térkép nézet
-> Ide jön majd a térkép screenshotja
 
 ```md
 ![Térkép](./docs/screenshots/map.png)
 ```
 
 ### Részletes panel
-> Ide jön majd a részletes nézet screenshotja
 
 ```md
 ![Részletes panel](./docs/screenshots/details.png)
 ```
 
 ### Profil oldal
-> Ide jön majd a profil screenshotja
 
 ```md
 ![Profil oldal](./docs/screenshots/profile.png)
 ```
 
 ### Admin panel
-> Ide jön majd az admin screenshotja
 
 ```md
 ![Admin panel](./docs/screenshots/admin.png)
 ```
 
 ---
-
-## Tech stack
 
 ### Frontend
 - React
@@ -136,72 +123,6 @@ Az alkalmazás felhasználói és admin oldallal is rendelkezik, így nemcsak b�
 - JWT
 - Multer
 - Cookie-based auth
-
----
-
-## Telepítés
-
-### 1. Adatbázis
-
-Hozz létre egy MySQL adatbázist, majd importáld a projekt SQL fájlját.
-
-Példa adatbázis név:
-
-```sql
-ketkereken
-```
-
----
-
-### 2. Backend telepítése
-
-```bash
-cd backend
-npm install
-```
-
-#### `.env` példa
-
-```env
-PORT=3001
-FRONTEND_ORIGIN=http://localhost:5173
-
-JWT_SECRET=random_secret_string
-TOKEN_TTL_DAYS=7
-AUTH_COOKIE_NAME=kk_token
-
-DB_HOST=localhost
-DB_USER=root
-DB_PASSWORD=your_password
-DB_NAME=ketkereken
-```
-
-#### Backend indítása
-
-```bash
-npm run dev
-```
-
-A backend alapértelmezett címe:
-
-```txt
-http://localhost:3001
-```
-
----
-
-### 3. Frontend telepítése
-
-```bash
-npm install
-npm run dev
-```
-
-A frontend alapértelmezett címe:
-
-```txt
-http://localhost:5173
-```
 
 ---
 
@@ -237,18 +158,6 @@ src/
   lib/
 
 backend/
-  server.js
-
-uploads/
-docs/
-  screenshots/
-  logo.png
-```
-
-Ha később modularizálva lesz a backend, akkor például így is kinézhet:
-
-```bash
-backend/
   src/
     controllers/
     routes/
@@ -256,6 +165,11 @@ backend/
     config/
     utils/
   server.js
+
+uploads/
+docs/
+  screenshots/
+  logo.png
 ```
 
 ---
@@ -282,26 +196,6 @@ Admin felület a tartalmak kezelésére és moderálására.
 
 ---
 
-## Fejlesztési ötletek
-
-- részletesebb keresés és szűrés
-- mobil felület további finomítása
-- még több közösségi funkció
-- térképes kedvencek nézet
-- értesítések a jóváhagyásokról
-- útvonalajánlás külső routing API-val
-
----
-
-## Megjegyzések
-
-- A frontend a backenddel `credentials: "include"` módban kommunikál.
-- A hitelesítés cookie alapú JWT-vel történik.
-- Az útvonalak JSON koordinátalistából épülnek fel.
-- A közösségi tartalmak moderáció után jelennek meg nyilvánosan.
-
----
-
 ## Készítette
 
-Ez a projekt vizsgaremek / portfólió célra készült, modern webes és térképes megoldások bemutatására.
+Ez a projekt vizsgaremek / portfólió célra készült, Srámli Dávid Bence és Hermann Zsombor által.
