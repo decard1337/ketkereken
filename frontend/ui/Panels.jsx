@@ -10,7 +10,11 @@ export default function Panels({
   esemenyek,
   kolcsonzok,
   selected,
-  onSelect
+  onSelect,
+  isKedvenc,
+  onToggleKedvenc,
+  kedvencLoadingId,
+  getCelTipusFromSelectedType
 }) {
   const isOpen = Boolean(activePanel)
 
@@ -71,6 +75,10 @@ export default function Panels({
             items={items}
             selected={selected}
             onSelect={onSelect}
+            isKedvenc={isKedvenc}
+            onToggleKedvenc={onToggleKedvenc}
+            kedvencLoadingId={kedvencLoadingId}
+            getCelTipusFromSelectedType={getCelTipusFromSelectedType}
           />
         </div>
       </div>

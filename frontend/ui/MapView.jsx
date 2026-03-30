@@ -73,7 +73,14 @@ function getCommunityType(tipus) {
   return null
 }
 
-function PopupPreview({ item, onOpenDetails }) {
+function PopupPreview({
+  item,
+  onOpenDetails,
+  isKedvenc,
+  onToggleKedvenc,
+  kedvencLoadingId,
+  getCelTipusFromSelectedType
+}) {
   const [kepek, setKepek] = useState([])
   const [kepIndex, setKepIndex] = useState(0)
   const [atlag, setAtlag] = useState(null)
@@ -81,6 +88,9 @@ function PopupPreview({ item, onOpenDetails }) {
   const [loading, setLoading] = useState(true)
 
   const communityType = getCommunityType(item.tipus)
+  const celTipus = getCelTipusFromSelectedType?.(item.tipus)
+  const kedvenc = isKedvenc?.(celTipus, item.id)
+  const favLoading = kedvencLoadingId === `${celTipus}-${item.id}`
 
   useEffect(() => {
     let cancelled = false
@@ -197,6 +207,20 @@ function PopupPreview({ item, onOpenDetails }) {
           )}
         </div>
 
+        <button
+          type="button"
+          className={"gm-popup-favBtn" + (kedvenc ? " active" : "")}
+          onClick={e => {
+            e.preventDefault()
+            e.stopPropagation()
+            onToggleKedvenc?.(celTipus, item.id)
+          }}
+          title={kedvenc ? "Kedvencekből törlés" : "Kedvencekhez adás"}
+          disabled={favLoading}
+        >
+          <i className={kedvenc ? "fa-solid fa-heart" : "fa-regular fa-heart"} />
+        </button>
+
         {kepek.length > 1 && !loading && (
           <button
             type="button"
@@ -244,7 +268,11 @@ export default function MapView({
   myPos,
   onSelect,
   onOpenDetails,
-  onMapClick
+  onMapClick,
+  isKedvenc,
+  onToggleKedvenc,
+  kedvencLoadingId,
+  getCelTipusFromSelectedType
 }) {
   const selectedRouteCoords = useMemo(() => {
     if (!selected || selected.type !== "utvonal") return null
@@ -298,7 +326,14 @@ export default function MapView({
             }}
           >
             <Popup maxWidth={360} className="gm-popup-wrap" closeButton>
-              <PopupPreview item={p} onOpenDetails={onOpenDetails} />
+              <PopupPreview
+                item={p}
+                onOpenDetails={onOpenDetails}
+                isKedvenc={isKedvenc}
+                onToggleKedvenc={onToggleKedvenc}
+                kedvencLoadingId={kedvencLoadingId}
+                getCelTipusFromSelectedType={getCelTipusFromSelectedType}
+              />
             </Popup>
           </Marker>
         ))}
