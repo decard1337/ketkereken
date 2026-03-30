@@ -32,7 +32,6 @@ function formatDate(value) {
 
 function Lightbox({ images, index, onClose, onPrev, onNext }) {
   const active = images[index]
-
   if (!active) return null
 
   return createPortal(
@@ -47,6 +46,7 @@ function Lightbox({ images, index, onClose, onPrev, onNext }) {
             <button className="img-lightbox-nav left" type="button" onClick={onPrev}>
               <i className="fa-solid fa-chevron-left" />
             </button>
+
             <button className="img-lightbox-nav right" type="button" onClick={onNext}>
               <i className="fa-solid fa-chevron-right" />
             </button>
@@ -79,10 +79,6 @@ export default function PanelDetails({ type, items, selected }) {
   const [szoveg, setSzoveg] = useState("")
   const [kepFile, setKepFile] = useState(null)
   const [kepLeiras, setKepLeiras] = useState("")
-
-  const [editingId, setEditingId] = useState(null)
-  const [editPontszam, setEditPontszam] = useState(0)
-  const [editSzoveg, setEditSzoveg] = useState("")
 
   const [loading, setLoading] = useState(false)
   const [msg, setMsg] = useState("")
@@ -172,46 +168,6 @@ export default function PanelDetails({ type, items, selected }) {
     }
   }
 
-  async function handleEditRating(id) {
-    if (!editPontszam) {
-      setErr("Válassz csillagot.")
-      return
-    }
-
-    try {
-      setErr("")
-      setMsg("")
-      await api.updateSajatErtekeles(id, editPontszam, editSzoveg)
-      setEditingId(null)
-      setEditPontszam(0)
-      setEditSzoveg("")
-      setMsg("Értékelés módosítva. Újra jóváhagyásra vár.")
-
-      const ertekelesRes = await api.ertekelesek(communityType, selectedItem.id)
-      setErtekelesLista(Array.isArray(ertekelesRes?.adatok) ? ertekelesRes.adatok : [])
-      setAtlag(ertekelesRes?.atlag ?? null)
-      setDarab(Number(ertekelesRes?.darab ?? 0))
-    } catch (e) {
-      setErr(e.message || "Nem sikerült módosítani az értékelést.")
-    }
-  }
-
-  async function handleDeleteRating(id) {
-    try {
-      setErr("")
-      setMsg("")
-      await api.deleteSajatErtekeles(id)
-      setMsg("Értékelés törölve.")
-
-      const ertekelesRes = await api.ertekelesek(communityType, selectedItem.id)
-      setErtekelesLista(Array.isArray(ertekelesRes?.adatok) ? ertekelesRes.adatok : [])
-      setAtlag(ertekelesRes?.atlag ?? null)
-      setDarab(Number(ertekelesRes?.darab ?? 0))
-    } catch (e) {
-      setErr(e.message || "Nem sikerült törölni az értékelést.")
-    }
-  }
-
   async function handleImageUpload() {
     if (!selectedItem || !communityType) return
     if (!kepFile) {
@@ -250,14 +206,17 @@ export default function PanelDetails({ type, items, selected }) {
             <div className="reszletek-ertek">{item.hossz || "—"} km</div>
             <div className="reszletek-cimke">Hossz</div>
           </div>
+
           <div className="reszletek-item">
             <div className="reszletek-ertek">{item.nehezseg || "—"}</div>
             <div className="reszletek-cimke">Nehézség</div>
           </div>
+
           <div className="reszletek-item">
             <div className="reszletek-ertek">{item.idotartam || "—"}</div>
             <div className="reszletek-cimke">Időtartam</div>
           </div>
+
           <div className="reszletek-item">
             <div className="reszletek-ertek">{item.szintkulonbseg || "—"} m</div>
             <div className="reszletek-cimke">Szintkülönbség</div>
@@ -273,10 +232,12 @@ export default function PanelDetails({ type, items, selected }) {
             <div className="reszletek-ertek">{item.tipus || "—"}</div>
             <div className="reszletek-cimke">Típus</div>
           </div>
+
           <div className="reszletek-item">
             <div className="reszletek-ertek">{item.lat || "—"}</div>
             <div className="reszletek-cimke">Lat</div>
           </div>
+
           <div className="reszletek-item">
             <div className="reszletek-ertek">{item.lng || "—"}</div>
             <div className="reszletek-cimke">Lng</div>
@@ -292,10 +253,12 @@ export default function PanelDetails({ type, items, selected }) {
             <div className="reszletek-ertek">{formatDate(item.datum)}</div>
             <div className="reszletek-cimke">Dátum</div>
           </div>
+
           <div className="reszletek-item">
             <div className="reszletek-ertek">{item.tipus || "—"}</div>
             <div className="reszletek-cimke">Típus</div>
           </div>
+
           <div className="reszletek-item">
             <div className="reszletek-ertek">{item.resztvevok || "—"}</div>
             <div className="reszletek-cimke">Résztvevők</div>
@@ -311,14 +274,17 @@ export default function PanelDetails({ type, items, selected }) {
             <div className="reszletek-ertek">{item.ar || "—"}</div>
             <div className="reszletek-cimke">Ár</div>
           </div>
+
           <div className="reszletek-item">
             <div className="reszletek-ertek">{item.telefon || "—"}</div>
             <div className="reszletek-cimke">Telefon</div>
           </div>
+
           <div className="reszletek-item">
             <div className="reszletek-ertek">{item.nyitvatartas || "—"}</div>
             <div className="reszletek-cimke">Nyitvatartás</div>
           </div>
+
           <div className="reszletek-item">
             <div className="reszletek-ertek">{item.cim || "—"}</div>
             <div className="reszletek-cimke">Cím</div>
@@ -337,8 +303,9 @@ export default function PanelDetails({ type, items, selected }) {
           <i className="fas fa-circle-info" />
           Válassz ki egy elemet
         </h3>
+
         <p className="reszletek-leiras">
-          Kattints a bal oldali listában egy elemre, és itt megjelennek a részletek.
+          Kattints a listában egy elemre, és itt megjelennek a részletek.
         </p>
       </div>
     )
@@ -351,7 +318,17 @@ export default function PanelDetails({ type, items, selected }) {
     <>
       <div className="panel-reszletek active">
         <h3 className="reszletek-cim">
-          <i className={`fas fa-${type === "utvonal" ? "route" : type === "destinacio" ? "map-marker-alt" : type === "esemeny" ? "calendar-alt" : "bicycle"}`} />
+          <i
+            className={`fas fa-${
+              type === "utvonal"
+                ? "route"
+                : type === "destinacio"
+                ? "map-marker-alt"
+                : type === "esemeny"
+                ? "calendar-alt"
+                : "bicycle"
+            }`}
+          />
           {title}
         </h3>
 
@@ -477,12 +454,10 @@ export default function PanelDetails({ type, items, selected }) {
               {ertekelesLista.map(ertekeles => (
                 <div key={ertekeles.id} className="community-ratingItem">
                   <div className="community-ratingTop">
-                    <a
-                      href={`/u/${ertekeles.username}`}
-                      className="community-user"
-                    >
+                    <a href={`/u/${ertekeles.username}`} className="community-user">
                       {ertekeles.username}
                     </a>
+
                     <div className="community-itemStars">
                       {"★".repeat(Number(ertekeles.pontszam || 0))}
                       {"☆".repeat(5 - Number(ertekeles.pontszam || 0))}
@@ -537,67 +512,6 @@ export default function PanelDetails({ type, items, selected }) {
           ) : (
             <div className="community-loginHint">
               Jelentkezz be, hogy értékelést írj vagy képet tölts fel.
-            </div>
-          )}
-
-          {user && selectedItem && (
-            <div className="community-rateBox">
-              <div className="community-subtitle">Saját értékelés szerkesztése / törlése</div>
-
-              <div className="community-note" style={{ marginBottom: 10 }}>
-                Itt az általad írt értékelést tudod módosítani vagy törölni.
-              </div>
-
-              {editingId ? (
-                <>
-                  <div className="community-starPicker">
-                    {[1, 2, 3, 4, 5].map(i => (
-                      <button
-                        key={i}
-                        type="button"
-                        className={"community-starBtn " + (i <= editPontszam ? "on" : "")}
-                        onClick={() => setEditPontszam(i)}
-                      >
-                        <i className="fas fa-star" />
-                      </button>
-                    ))}
-                  </div>
-
-                  <textarea
-                    className="community-textarea"
-                    rows={4}
-                    value={editSzoveg}
-                    onChange={e => setEditSzoveg(e.target.value)}
-                  />
-
-                  <div style={{ display: "flex", gap: 10, marginTop: 12 }}>
-                    <button className="community-btn" type="button" onClick={() => handleEditRating(editingId)}>
-                      Mentés
-                    </button>
-
-                    <button
-                      className="community-btn"
-                      type="button"
-                      onClick={() => {
-                        setEditingId(null)
-                        setEditPontszam(0)
-                        setEditSzoveg("")
-                      }}
-                      style={{ background: "rgba(255,255,255,.12)" }}
-                    >
-                      Mégse
-                    </button>
-                  </div>
-
-                  <div className="community-note">
-                    Módosítás után az értékelés újra jóváhagyásra vár.
-                  </div>
-                </>
-              ) : (
-                <div className="community-note">
-                  Ha van saját értékelésed, azt a profiloldaladon biztosan eléred. Itt akkor tudod szerkeszteni, ha kiválasztod a megfelelő elemet.
-                </div>
-              )}
             </div>
           )}
 

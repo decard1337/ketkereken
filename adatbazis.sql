@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Gép: 127.0.0.1
--- Létrehozás ideje: 2026. Már 24. 23:25
+-- Létrehozás ideje: 2026. Már 30. 14:23
 -- Kiszolgáló verziója: 10.4.32-MariaDB
 -- PHP verzió: 8.2.12
 
@@ -20,32 +20,6 @@ SET time_zone = "+00:00";
 --
 -- Adatbázis: `ketkerek`
 --
-
--- --------------------------------------------------------
-
---
--- Tábla szerkezet ehhez a táblához `blippek`
---
-
-CREATE TABLE `blippek` (
-  `id` int(11) NOT NULL,
-  `nev` varchar(100) NOT NULL,
-  `leiras` text DEFAULT NULL,
-  `lat` decimal(10,8) NOT NULL,
-  `lng` decimal(11,8) NOT NULL,
-  `tipus` enum('kölcsönző','szerviz','pihenő','látványosság') DEFAULT NULL,
-  `ikon` varchar(50) DEFAULT NULL,
-  `statusz` enum('aktiv','inaktiv') DEFAULT 'aktiv'
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_hungarian_ci;
-
---
--- A tábla adatainak kiíratása `blippek`
---
-
-INSERT INTO `blippek` (`id`, `nev`, `leiras`, `lat`, `lng`, `tipus`, `ikon`, `statusz`) VALUES
-(1, 'Biciklikölcsönző - Deák tér', 'Bubi állomás', 47.49790000, 19.05110000, 'kölcsönző', 'bicycle', 'aktiv'),
-(2, 'Kerékpár szerviz', 'Professzionális kerékpár javítás', 47.50210000, 19.03920000, 'szerviz', 'tools', 'aktiv'),
-(3, 'Duna panoráma', 'Gyönyörű kilátás a Dunára', 47.49880000, 19.04390000, 'látványosság', 'camera', 'aktiv');
 
 -- --------------------------------------------------------
 
@@ -89,16 +63,18 @@ CREATE TABLE `ertekelesek` (
   `statusz` enum('fuggoben','elfogadva','elutasitva') NOT NULL DEFAULT 'fuggoben',
   `letrehozva` timestamp NOT NULL DEFAULT current_timestamp(),
   `ellenorizte_admin` int(11) DEFAULT NULL,
-  `ellenorizve` timestamp NULL DEFAULT NULL
+  `ellenorizve` timestamp NULL DEFAULT NULL,
+  `elutasitas_indok` text DEFAULT NULL
 ) ;
 
 --
 -- A tábla adatainak kiíratása `ertekelesek`
 --
 
-INSERT INTO `ertekelesek` (`id`, `felhasznalo_id`, `cel_tipus`, `cel_id`, `pontszam`, `szoveg`, `statusz`, `letrehozva`, `ellenorizte_admin`, `ellenorizve`) VALUES
-(5, 3, 'utvonalak', 4, 5, 'szar', 'elfogadva', '2026-03-24 21:02:46', NULL, NULL),
-(6, 3, 'esemenyek', 1, 4, 'fasza', 'elfogadva', '2026-03-24 21:11:46', NULL, NULL);
+INSERT INTO `ertekelesek` (`id`, `felhasznalo_id`, `cel_tipus`, `cel_id`, `pontszam`, `szoveg`, `statusz`, `letrehozva`, `ellenorizte_admin`, `ellenorizve`, `elutasitas_indok`) VALUES
+(5, 3, 'utvonalak', 4, 5, 'szar', 'elfogadva', '2026-03-24 21:02:46', NULL, NULL, NULL),
+(6, 3, 'esemenyek', 1, 4, 'fasza', 'elfogadva', '2026-03-24 21:11:46', NULL, NULL, NULL),
+(7, 3, 'kolcsonzok', 3, 2, 'segitsge', 'elutasitva', '2026-03-29 13:02:35', 3, '2026-03-29 13:28:38', 'qwert1234');
 
 -- --------------------------------------------------------
 
@@ -152,7 +128,7 @@ CREATE TABLE `felhasznalok` (
 
 INSERT INTO `felhasznalok` (`id`, `email`, `felhasznalonev`, `jelszo_hash`, `rang`, `profilkep`, `bio`, `letrehozva`, `utolso_modositas`) VALUES
 (2, 'kutya@gmail.com', 'ferihegy', '$2b$12$iXpypqw073OmFRrMptqjkOuVZqLMT53fvjpARXRCBx5ZQ1JSJFnlm', 'admin', NULL, NULL, '2026-03-13 13:57:36', NULL),
-(3, 'admin@admin.hu', 'admin', '$2b$12$MjRryvCDiK8Dl.7ihZSjkeBSMdCnPq9AbC3aTemBlLAB3jXySY8wK', 'admin', '/uploads/1774200800566-903215822.webp', 'rawrrxdxdxd', '2026-03-22 18:06:30', '2026-03-22 18:33:20');
+(3, 'admin@admin.hu', 'admin', '$2b$12$MjRryvCDiK8Dl.7ihZSjkeBSMdCnPq9AbC3aTemBlLAB3jXySY8wK', 'admin', '/uploads/1774792565186-279307883.png', 'rawrrxdxdxd', '2026-03-29 13:56:05', '2026-03-29 15:56:05');
 
 -- --------------------------------------------------------
 
@@ -184,16 +160,18 @@ CREATE TABLE `kepek` (
   `statusz` enum('fuggoben','elfogadva','elutasitva') NOT NULL DEFAULT 'fuggoben',
   `letrehozva` timestamp NOT NULL DEFAULT current_timestamp(),
   `ellenorizte_admin` int(11) DEFAULT NULL,
-  `ellenorizve` timestamp NULL DEFAULT NULL
+  `ellenorizve` timestamp NULL DEFAULT NULL,
+  `elutasitas_indok` text DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- A tábla adatainak kiíratása `kepek`
 --
 
-INSERT INTO `kepek` (`id`, `felhasznalo_id`, `cel_tipus`, `cel_id`, `fajl_utvonal`, `leiras`, `statusz`, `letrehozva`, `ellenorizte_admin`, `ellenorizve`) VALUES
-(1, 3, 'esemenyek', 1, '/uploads/1774386942264-900386885.png', 'legjobb hely', 'elfogadva', '2026-03-24 21:15:42', NULL, NULL),
-(2, 3, 'esemenyek', 1, '/uploads/1774387799044-363849412.jpeg', NULL, 'elfogadva', '2026-03-24 21:29:59', NULL, NULL);
+INSERT INTO `kepek` (`id`, `felhasznalo_id`, `cel_tipus`, `cel_id`, `fajl_utvonal`, `leiras`, `statusz`, `letrehozva`, `ellenorizte_admin`, `ellenorizve`, `elutasitas_indok`) VALUES
+(1, 3, 'esemenyek', 1, '/uploads/1774386942264-900386885.png', 'legjobb hely', 'elfogadva', '2026-03-24 21:15:42', NULL, NULL, NULL),
+(2, 3, 'esemenyek', 1, '/uploads/1774387799044-363849412.jpeg', NULL, 'elfogadva', '2026-03-24 21:29:59', NULL, NULL, NULL),
+(3, 3, 'kolcsonzok', 3, '/uploads/1774789375589-210501175.png', 'qwertr', 'fuggoben', '2026-03-29 13:02:55', NULL, NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -225,30 +203,6 @@ INSERT INTO `kolcsonzok` (`id`, `nev`, `cim`, `lat`, `lng`, `ar`, `telefon`, `ny
 -- --------------------------------------------------------
 
 --
--- Tábla szerkezet ehhez a táblához `menu`
---
-
-CREATE TABLE `menu` (
-  `id` int(11) NOT NULL,
-  `nev` varchar(100) NOT NULL,
-  `link` varchar(50) NOT NULL,
-  `statusz` enum('aktiv','inaktiv') DEFAULT 'aktiv',
-  `sorrend` int(11) DEFAULT 0
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_hungarian_ci;
-
---
--- A tábla adatainak kiíratása `menu`
---
-
-INSERT INTO `menu` (`id`, `nev`, `link`, `statusz`, `sorrend`) VALUES
-(2, 'Útvonalak', 'utvonalak', 'aktiv', 2),
-(3, 'Desztinációk', 'desztinaciok', 'aktiv', 3),
-(4, 'Események', 'esemenyek', 'aktiv', 4),
-(5, 'Kölcsönzők', 'kölcsönzők', 'aktiv', 5);
-
--- --------------------------------------------------------
-
---
 -- Tábla szerkezet ehhez a táblához `utvonalak`
 --
 
@@ -276,12 +230,6 @@ INSERT INTO `utvonalak` (`id`, `cim`, `leiras`, `koordinatak`, `hossz`, `nehezse
 --
 -- Indexek a kiírt táblákhoz
 --
-
---
--- A tábla indexei `blippek`
---
-ALTER TABLE `blippek`
-  ADD PRIMARY KEY (`id`);
 
 --
 -- A tábla indexei `destinaciok`
@@ -339,12 +287,6 @@ ALTER TABLE `kolcsonzok`
   ADD PRIMARY KEY (`id`);
 
 --
--- A tábla indexei `menu`
---
-ALTER TABLE `menu`
-  ADD PRIMARY KEY (`id`);
-
---
 -- A tábla indexei `utvonalak`
 --
 ALTER TABLE `utvonalak`
@@ -353,12 +295,6 @@ ALTER TABLE `utvonalak`
 --
 -- A kiírt táblák AUTO_INCREMENT értéke
 --
-
---
--- AUTO_INCREMENT a táblához `blippek`
---
-ALTER TABLE `blippek`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT a táblához `destinaciok`
@@ -394,19 +330,13 @@ ALTER TABLE `kedvencek`
 -- AUTO_INCREMENT a táblához `kepek`
 --
 ALTER TABLE `kepek`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT a táblához `kolcsonzok`
 --
 ALTER TABLE `kolcsonzok`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
-
---
--- AUTO_INCREMENT a táblához `menu`
---
-ALTER TABLE `menu`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
 
 --
 -- AUTO_INCREMENT a táblához `utvonalak`

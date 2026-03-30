@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react"
+import { useSearchParams } from "react-router-dom"
 import { api } from "../lib/api"
 
 import Splash from "../ui/Splash"
@@ -15,7 +16,31 @@ const STATIC_MENU = [
   { id: 4, nev: "Kölcsönzők", link: "kolcsonzok", ikon: "bicycle" }
 ]
 
+function normalizeType(type) {
+  const t = String(type || "").trim().toLowerCase()
+
+  if (t === "utvonal" || t === "utvonalak") {
+    return { panel: "utvonalak", selectedType: "utvonal" }
+  }
+
+  if (t === "destinacio" || t === "destinaciok") {
+    return { panel: "destinaciok", selectedType: "destinacio" }
+  }
+
+  if (t === "esemeny" || t === "esemenyek") {
+    return { panel: "esemenyek", selectedType: "esemeny" }
+  }
+
+  if (t === "kolcsonzo" || t === "kolcsonzok") {
+    return { panel: "kolcsonzok", selectedType: "kolcsonzo" }
+  }
+
+  return null
+}
+
 export default function MapPage() {
+  const [searchParams] = useSearchParams()
+
   const [loading, setLoading] = useState(true)
 
   const [menu] = useState(STATIC_MENU)
@@ -50,10 +75,43 @@ export default function MapPage() {
 
         if (cancelled) return
 
-        setUtvonalak(Array.isArray(u) ? u : [])
-        setDestinaciok(Array.isArray(d) ? d : [])
-        setEsemenyek(Array.isArray(e) ? e : [])
-        setKolcsonzok(Array.isArray(k) ? k : [])
+        const uData = Array.isArray(u) ? u : []
+        const dData = Array.isArray(d) ? d : []
+        const eData = Array.isArray(e) ? e : []
+        const kData = Array.isArray(k) ? k : []
+
+        setUtvonalak(uData)
+        setDestinaciok(dData)
+        setEsemenyek(eData)
+        setKolcsonzok(kData)
+
+        const tipus = searchParams.get("tipus")
+        const id = searchParams.get("id")
+
+        if (tipus && id) {
+          const normalized = normalizeType(tipus)
+
+          if (normalized) {
+            let source = []
+
+            if (normalized.panel === "utvonalak") source = uData
+            if (normalized.panel === "destinaciok") source = dData
+            if (normalized.panel === "esemenyek") source = eData
+            if (normalized.panel === "kolcsonzok") source = kData
+
+            const exists = source.some(item => String(item.id) === String(id))
+
+            if (exists) {
+              setActivePanel(normalized.panel)
+              setSelected({
+                type: normalized.selectedType,
+                id: String(id)
+              })
+              setSidebarOpen(false)
+              setLayerPanelOpen(false)
+            }
+          }
+        }
       } finally {
         if (!cancelled) setLoading(false)
       }
@@ -64,7 +122,18 @@ export default function MapPage() {
     return () => {
       cancelled = true
     }
-  }, [])
+  }, [searchParams])
+
+  useEffect(() => {
+    if (locRequestTick === 0) return
+    if (!navigator.geolocation) return
+
+    navigator.geolocation.getCurrentPosition(
+      pos => setMyPos([pos.coords.latitude, pos.coords.longitude]),
+      () => {},
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
+    )
+  }, [locRequestTick])
 
   function openPanelByMenu(link) {
     const mapping = {
@@ -98,21 +167,10 @@ export default function MapPage() {
     if (!panel) return
 
     setActivePanel(panel)
-    setSelected({ type, id })
+    setSelected({ type, id: String(id) })
     setSidebarOpen(false)
     setLayerPanelOpen(false)
   }
-
-  useEffect(() => {
-    if (locRequestTick === 0) return
-    if (!navigator.geolocation) return
-
-    navigator.geolocation.getCurrentPosition(
-      pos => setMyPos([pos.coords.latitude, pos.coords.longitude]),
-      () => {},
-      { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
-    )
-  }, [locRequestTick])
 
   const mapPoints = useMemo(() => {
     const d = destinaciok.map(x => ({
@@ -123,7 +181,10 @@ export default function MapPage() {
       lat: Number(x.lat),
       lng: Number(x.lng),
       ikon: "map-marker-alt",
-      extra: { ertekeles: x.ertekeles, tipus: x.tipus }
+      extra: {
+        ertekeles: x.ertekeles,
+        tipus: x.tipus
+      }
     }))
 
     const e = esemenyek.map(x => ({
@@ -134,7 +195,11 @@ export default function MapPage() {
       lat: Number(x.lat),
       lng: Number(x.lng),
       ikon: "calendar-alt",
-      extra: { datum: x.datum, resztvevok: x.resztvevok, tipus: x.tipus }
+      extra: {
+        datum: x.datum,
+        resztvevok: x.resztvevok,
+        tipus: x.tipus
+      }
     }))
 
     const k = kolcsonzok.map(x => ({
@@ -145,7 +210,11 @@ export default function MapPage() {
       lat: Number(x.lat),
       lng: Number(x.lng),
       ikon: "bicycle",
-      extra: { ar: x.ar, telefon: x.telefon, nyitvatartas: x.nyitvatartas }
+      extra: {
+        ar: x.ar,
+        telefon: x.telefon,
+        nyitvatartas: x.nyitvatartas
+      }
     }))
 
     return [...d, ...e, ...k]
@@ -180,9 +249,10 @@ export default function MapPage() {
             <div className="map-floating-mark">
               <i className="fas fa-bicycle" />
             </div>
+
             <div className="map-floating-texts">
               <span className="map-floating-name">Két Keréken</span>
-              <span className="map-floating-sub">Budapest</span>
+              <span className="map-floating-sub">Térkép</span>
             </div>
           </div>
         </div>
@@ -192,14 +262,14 @@ export default function MapPage() {
           menu={menu}
           onClose={() => setSidebarOpen(false)}
           onOpen={() => setSidebarOpen(true)}
-          onMenuClick={link => openPanelByMenu(link)}
+          onMenuClick={openPanelByMenu}
         />
 
         <LayerPanel
           open={layerPanelOpen}
           layerType={layerType}
-          onChange={v => {
-            setLayerType(v)
+          onChange={value => {
+            setLayerType(value)
             setLayerPanelOpen(false)
           }}
         />
