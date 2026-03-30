@@ -24,6 +24,10 @@ async function req(path, options = {}) {
   }
 
   if (!res.ok) {
+    if (path === "/auth/me" && res.status === 401) {
+      return { user: null }
+    }
+
     throw new Error(data?.error || `API hiba: ${res.status}`)
   }
 
@@ -37,13 +41,21 @@ export const api = {
   kolcsonzok: () => req("/kolcsonzok"),
 
   register: (email, username, password) =>
-    req("/auth/register", { method: "POST", body: { email, username, password } }),
+    req("/auth/register", {
+      method: "POST",
+      body: { email, username, password }
+    }),
 
   login: (email, password) =>
-    req("/auth/login", { method: "POST", body: { email, password } }),
+    req("/auth/login", {
+      method: "POST",
+      body: { email, password }
+    }),
 
   logout: () =>
-    req("/auth/logout", { method: "POST" }),
+    req("/auth/logout", {
+      method: "POST"
+    }),
 
   me: () =>
     req("/auth/me"),
@@ -52,25 +64,40 @@ export const api = {
     req(`/u/${encodeURIComponent(username)}`),
 
   profilMentese: (username, bio) =>
-    req("/profilom", { method: "PUT", body: { username, bio } }),
+    req("/profilom", {
+      method: "PUT",
+      body: { username, bio }
+    }),
 
   profilkepFeltoltes: file => {
     const fd = new FormData()
     fd.append("file", file)
-    return req("/profilom/profilkep", { method: "POST", formData: fd })
+
+    return req("/profilom/profilkep", {
+      method: "POST",
+      formData: fd
+    })
   },
 
   adminList: tabla =>
     req(`/admin/${encodeURIComponent(tabla)}`),
 
   adminCreate: (tabla, body) =>
-    req(`/admin/${encodeURIComponent(tabla)}`, { method: "POST", body }),
+    req(`/admin/${encodeURIComponent(tabla)}`, {
+      method: "POST",
+      body
+    }),
 
   adminUpdate: (tabla, id, body) =>
-    req(`/admin/${encodeURIComponent(tabla)}/${encodeURIComponent(id)}`, { method: "PUT", body }),
+    req(`/admin/${encodeURIComponent(tabla)}/${encodeURIComponent(id)}`, {
+      method: "PUT",
+      body
+    }),
 
   adminDelete: (tabla, id) =>
-    req(`/admin/${encodeURIComponent(tabla)}/${encodeURIComponent(id)}`, { method: "DELETE" }),
+    req(`/admin/${encodeURIComponent(tabla)}/${encodeURIComponent(id)}`, {
+      method: "DELETE"
+    }),
 
   adminResetPassword: (id, newPassword) =>
     req(`/admin/felhasznalok/${encodeURIComponent(id)}/jelszo`, {
@@ -81,6 +108,7 @@ export const api = {
   adminUploadUserProfileImage: (id, file) => {
     const fd = new FormData()
     fd.append("file", file)
+
     return req(`/admin/felhasznalok/${encodeURIComponent(id)}/profilkep`, {
       method: "POST",
       formData: fd
@@ -88,19 +116,29 @@ export const api = {
   },
 
   toggleKedvenc: (cel_tipus, cel_id) =>
-    req("/kedvencek/toggle", { method: "POST", body: { cel_tipus, cel_id } }),
+    req("/kedvencek/toggle", {
+      method: "POST",
+      body: { cel_tipus, cel_id }
+    }),
 
   kedvencek: () =>
     req("/kedvencek"),
 
   kedvencStatusz: (cel_tipus, cel_id) =>
-    req(`/kedvencek/status?cel_tipus=${encodeURIComponent(cel_tipus)}&cel_id=${encodeURIComponent(cel_id)}`),
+    req(
+      `/kedvencek/status?cel_tipus=${encodeURIComponent(cel_tipus)}&cel_id=${encodeURIComponent(cel_id)}`
+    ),
 
   kuldErtekeles: (cel_tipus, cel_id, pontszam, szoveg) =>
-    req("/ertekelesek", { method: "POST", body: { cel_tipus, cel_id, pontszam, szoveg } }),
+    req("/ertekelesek", {
+      method: "POST",
+      body: { cel_tipus, cel_id, pontszam, szoveg }
+    }),
 
   ertekelesek: (cel_tipus, cel_id) =>
-    req(`/ertekelesek?cel_tipus=${encodeURIComponent(cel_tipus)}&cel_id=${encodeURIComponent(cel_id)}`),
+    req(
+      `/ertekelesek?cel_tipus=${encodeURIComponent(cel_tipus)}&cel_id=${encodeURIComponent(cel_id)}`
+    ),
 
   updateSajatErtekeles: (id, pontszam, szoveg) =>
     req(`/sajat/ertekelesek/${encodeURIComponent(id)}`, {
@@ -119,20 +157,32 @@ export const api = {
     fd.append("cel_id", String(cel_id))
     fd.append("leiras", leiras)
     fd.append("file", file)
-    return req("/kepek", { method: "POST", formData: fd })
+
+    return req("/kepek", {
+      method: "POST",
+      formData: fd
+    })
   },
 
   kepek: (cel_tipus, cel_id) =>
-    req(`/kepek?cel_tipus=${encodeURIComponent(cel_tipus)}&cel_id=${encodeURIComponent(cel_id)}`),
+    req(
+      `/kepek?cel_tipus=${encodeURIComponent(cel_tipus)}&cel_id=${encodeURIComponent(cel_id)}`
+    ),
 
   adminJovahagyando: () =>
     req("/admin/jovahagyando"),
 
   adminElfogad: (tipus, id) =>
-    req("/admin/elfogad", { method: "POST", body: { tipus, id } }),
+    req("/admin/elfogad", {
+      method: "POST",
+      body: { tipus, id }
+    }),
 
   adminElutasit: (tipus, id, indok = "") =>
-    req("/admin/elutasit", { method: "POST", body: { tipus, id, indok } }),
+    req("/admin/elutasit", {
+      method: "POST",
+      body: { tipus, id, indok }
+    }),
 
   sajatErtekelesek: () =>
     req("/sajat/ertekelesek"),

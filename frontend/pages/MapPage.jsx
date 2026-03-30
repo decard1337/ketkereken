@@ -38,6 +38,14 @@ function normalizeType(type) {
   return null
 }
 
+function getCelTipusFromSelectedType(type) {
+  if (type === "utvonal") return "utvonalak"
+  if (type === "destinacio") return "destinaciok"
+  if (type === "esemeny") return "esemenyek"
+  if (type === "kolcsonzo") return "kolcsonzok"
+  return ""
+}
+
 export default function MapPage() {
   const [searchParams] = useSearchParams()
 
@@ -59,6 +67,9 @@ export default function MapPage() {
   const [myPos, setMyPos] = useState(null)
   const [locRequestTick, setLocRequestTick] = useState(0)
 
+  const [kedvencek, setKedvencek] = useState([])
+  const [kedvencLoadingId, setKedvencLoadingId] = useState("")
+
   useEffect(() => {
     let cancelled = false
 
@@ -66,11 +77,12 @@ export default function MapPage() {
       try {
         setLoading(true)
 
-        const [u, d, e, k] = await Promise.all([
+        const [u, d, e, k, kedv] = await Promise.all([
           api.utvonalak(),
           api.destinaciok(),
           api.esemenyek(),
-          api.kolcsonzok()
+          api.kolcsonzok(),
+          api.kedvencek().catch(() => [])
         ])
 
         if (cancelled) return
@@ -84,6 +96,7 @@ export default function MapPage() {
         setDestinaciok(dData)
         setEsemenyek(eData)
         setKolcsonzok(kData)
+        setKedvencek(Array.isArray(kedv) ? kedv : [])
 
         const tipus = searchParams.get("tipus")
         const id = searchParams.get("id")
@@ -172,6 +185,45 @@ export default function MapPage() {
     setLayerPanelOpen(false)
   }
 
+  function isKedvenc(cel_tipus, cel_id) {
+    return kedvencek.some(
+      k => String(k.cel_tipus) === String(cel_tipus) && String(k.cel_id) === String(cel_id)
+    )
+  }
+
+  async function handleToggleKedvenc(cel_tipus, cel_id) {
+    const key = `${cel_tipus}-${cel_id}`
+
+    try {
+      setKedvencLoadingId(key)
+      await api.toggleKedvenc(cel_tipus, cel_id)
+
+      setKedvencek(prev => {
+        const exists = prev.some(
+          k => String(k.cel_tipus) === String(cel_tipus) && String(k.cel_id) === String(cel_id)
+        )
+
+        if (exists) {
+          return prev.filter(
+            k => !(String(k.cel_tipus) === String(cel_tipus) && String(k.cel_id) === String(cel_id))
+          )
+        }
+
+        return [
+          ...prev,
+          {
+            cel_tipus,
+            cel_id
+          }
+        ]
+      })
+    } catch (err) {
+      console.error("Kedvenc váltási hiba:", err)
+    } finally {
+      setKedvencLoadingId("")
+    }
+  }
+
   const mapPoints = useMemo(() => {
     const d = destinaciok.map(x => ({
       id: x.id,
@@ -242,6 +294,10 @@ export default function MapPage() {
           onMapClick={() => {
             setLayerPanelOpen(false)
           }}
+          isKedvenc={isKedvenc}
+          onToggleKedvenc={handleToggleKedvenc}
+          kedvencLoadingId={kedvencLoadingId}
+          getCelTipusFromSelectedType={getCelTipusFromSelectedType}
         />
 
         <div id="header">
@@ -303,6 +359,10 @@ export default function MapPage() {
         kolcsonzok={kolcsonzok}
         selected={selected}
         onSelect={setSelected}
+        isKedvenc={isKedvenc}
+        onToggleKedvenc={handleToggleKedvenc}
+        kedvencLoadingId={kedvencLoadingId}
+        getCelTipusFromSelectedType={getCelTipusFromSelectedType}
       />
     </div>
   )

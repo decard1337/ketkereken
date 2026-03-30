@@ -14,7 +14,16 @@ function getTypeIcon(type) {
   return "circle"
 }
 
-export default function PanelList({ type, items, selected, onSelect }) {
+export default function PanelList({
+  type,
+  items,
+  selected,
+  onSelect,
+  isKedvenc,
+  onToggleKedvenc,
+  kedvencLoadingId,
+  getCelTipusFromSelectedType
+}) {
   return (
     <div className="panel-lista">
       {items.map(item => {
@@ -30,6 +39,10 @@ export default function PanelList({ type, items, selected, onSelect }) {
           subtitle = item.cim || ""
         }
 
+        const celTipus = getCelTipusFromSelectedType(type)
+        const kedvenc = isKedvenc?.(celTipus, item.id)
+        const favLoading = kedvencLoadingId === `${celTipus}-${item.id}`
+
         return (
           <button
             key={item.id}
@@ -37,15 +50,30 @@ export default function PanelList({ type, items, selected, onSelect }) {
             onClick={() => onSelect?.({ type, id: item.id })}
             type="button"
           >
-            <div className="panel-cim">
-              <i className={`fas fa-${getTypeIcon(type)}`} />
-              <span>{title}</span>
+            <div className="panel-card-topRow">
+              <div className="panel-cim">
+                <i className={`fas fa-${getTypeIcon(type)}`} />
+                <span>{title}</span>
 
-              {type === "utvonal" && item.nehezseg && (
-                <span className={"nehezseg-badge " + getDifficultyClass(item.nehezseg)}>
-                  {item.nehezseg}
-                </span>
-              )}
+                {type === "utvonal" && item.nehezseg && (
+                  <span className={"nehezseg-badge " + getDifficultyClass(item.nehezseg)}>
+                    {item.nehezseg}
+                  </span>
+                )}
+              </div>
+
+              <button
+                type="button"
+                className={"panel-favBtn" + (kedvenc ? " active" : "")}
+                onClick={e => {
+                  e.stopPropagation()
+                  onToggleKedvenc?.(celTipus, item.id)
+                }}
+                title={kedvenc ? "Kedvencekből törlés" : "Kedvencekhez adás"}
+                disabled={favLoading}
+              >
+                <i className={kedvenc ? "fa-solid fa-heart" : "fa-regular fa-heart"} />
+              </button>
             </div>
 
             {subtitle && (
