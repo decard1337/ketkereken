@@ -23,7 +23,7 @@ function FlyToSelected({ selected, points, utvonalak, myPos }) {
       try {
         const coords = JSON.parse(u.koordinatak)
         const bounds = L.latLngBounds(coords)
-        map.fitBounds(bounds, { padding: [30, 30] })
+        map.fitBounds(bounds, { padding: [40, 40] })
       } catch {}
 
       return
@@ -50,11 +50,11 @@ function AntPath({ coords }) {
     if (!coords?.length) return
 
     const ant = L.polyline.antPath(coords, {
-      color: "#007AFF",
-      weight: 4,
-      opacity: 0.6,
+      color: "#8b5cf6",
+      weight: 5,
+      opacity: 0.65,
       dashArray: [10, 20],
-      pulseColor: "#FFFFFF"
+      pulseColor: "#ffffff"
     }).addTo(map)
 
     return () => {
@@ -136,6 +136,7 @@ function PopupPreview({ item, onOpenDetails }) {
     return (
       <div className="gm-stars">
         <span className="gm-rating-number">{num.toFixed(1)}</span>
+
         <div className="gm-star-icons">
           {[1, 2, 3, 4, 5].map(i => (
             <i
@@ -145,6 +146,7 @@ function PopupPreview({ item, onOpenDetails }) {
             />
           ))}
         </div>
+
         <span className="gm-rating-count">({darab})</span>
       </div>
     )
@@ -183,7 +185,7 @@ function PopupPreview({ item, onOpenDetails }) {
           {!loading && !activeImage && (
             <div className="gm-popup-placeholder">
               <i className="fa-regular fa-image" />
-              <span>Jelenleg nem található kép erről a helyről</span>
+              <span>Jelenleg nincs kép</span>
             </div>
           )}
 
@@ -273,7 +275,7 @@ export default function MapView({
   })
 
   return (
-    <div style={{ height: "100%", width: "100%", position: "relative" }}>
+    <div className="map-stage">
       <MapContainer
         center={[47.4979, 19.0402]}
         zoom={13}
@@ -317,7 +319,7 @@ export default function MapView({
           <>
             <Polyline
               positions={selectedRouteCoords}
-              pathOptions={{ color: "#007AFF", weight: 6, opacity: 0.8 }}
+              pathOptions={{ color: "#8b5cf6", weight: 6, opacity: 0.86 }}
             />
             <AntPath coords={selectedRouteCoords} />
           </>

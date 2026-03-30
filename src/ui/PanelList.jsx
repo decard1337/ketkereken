@@ -1,3 +1,19 @@
+function getDifficultyClass(value) {
+  const v = String(value || "").toLowerCase()
+
+  if (v === "könnyű" || v === "konnyu") return "nehezseg-konnyu"
+  if (v === "közepes" || v === "kozepes") return "nehezseg-kozepes"
+  return "nehezseg-nehez"
+}
+
+function getTypeIcon(type) {
+  if (type === "utvonal") return "route"
+  if (type === "destinacio") return "map-marker-alt"
+  if (type === "esemeny") return "calendar-alt"
+  if (type === "kolcsonzo") return "bicycle"
+  return "circle"
+}
+
 export default function PanelList({ type, items, selected, onSelect }) {
   return (
     <div className="panel-lista">
@@ -10,35 +26,23 @@ export default function PanelList({ type, items, selected, onSelect }) {
         const title = item.cim || item.nev || `#${item.id}`
 
         let subtitle = item.leiras || ""
-
         if (!subtitle && type === "kolcsonzo") {
           subtitle = item.cim || ""
         }
 
         return (
-          <div
+          <button
             key={item.id}
             className={"panel-card" + (isActive ? " active" : "")}
             onClick={() => onSelect?.({ type, id: item.id })}
+            type="button"
           >
             <div className="panel-cim">
-              {type === "utvonal" && <i className="fas fa-route" />}
-              {type === "destinacio" && <i className="fas fa-map-marker-alt" />}
-              {type === "esemeny" && <i className="fas fa-calendar-alt" />}
-              {type === "kolcsonzo" && <i className="fas fa-bicycle" />}
+              <i className={`fas fa-${getTypeIcon(type)}`} />
               <span>{title}</span>
 
               {type === "utvonal" && item.nehezseg && (
-                <span
-                  className={
-                    "nehezseg-badge " +
-                    (item.nehezseg === "könnyű" || item.nehezseg === "konnyu"
-                      ? "nehezseg-konnyu"
-                      : item.nehezseg === "közepes" || item.nehezseg === "kozepes"
-                      ? "nehezseg-kozepes"
-                      : "nehezseg-nehez")
-                  }
-                >
+                <span className={"nehezseg-badge " + getDifficultyClass(item.nehezseg)}>
                   {item.nehezseg}
                 </span>
               )}
@@ -58,7 +62,7 @@ export default function PanelList({ type, items, selected, onSelect }) {
               {type === "kolcsonzo" && item.ar && <span>{item.ar}</span>}
               {type === "kolcsonzo" && item.nyitvatartas && <span>{item.nyitvatartas}</span>}
             </div>
-          </div>
+          </button>
         )
       })}
     </div>
