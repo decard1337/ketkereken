@@ -12,6 +12,8 @@ import ratingRoutes from "./routes/ratingRoutes.js"
 import imageRoutes from "./routes/imageRoutes.js"
 import adminRoutes from "./routes/adminRoutes.js"
 import publicRoutes from "./routes/publicRoutes.js"
+import followRoutes from "./routes/followRoutes.js"
+import feedRoutes from "./routes/feedRoutes.js"
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -32,11 +34,13 @@ app.get("/health", (req, res) => {
 })
 
 app.use("/api/auth", authRoutes)
-app.use("/api", profileRoutes)
+app.use("/api/follow", followRoutes)
+app.use("/api/feed", feedRoutes)
 app.use("/api/kedvencek", favoriteRoutes)
 app.use("/api/ertekelesek", ratingRoutes)
 app.use("/api/kepek", imageRoutes)
 app.use("/api/admin", adminRoutes)
+app.use("/api", profileRoutes)
 app.use("/api", publicRoutes)
 
 app.use((req, res) => {

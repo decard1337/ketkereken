@@ -1,5 +1,6 @@
 import { pool } from "../config/db.js"
 import { celLetezik, normalizalCelTipus, resolveCelTitle } from "../utils/celHelpers.js"
+import { createActivity } from "../utils/activityHelpers.js"
 
 export async function uploadImage(req, res) {
   try {
@@ -25,6 +26,14 @@ export async function uploadImage(req, res) {
       "INSERT INTO kepek (felhasznalo_id, cel_tipus, cel_id, fajl_utvonal, leiras) VALUES (?,?,?,?,?)",
       [req.user.id, cel_tipus, cel_id, fajl_utvonal, leiras || null]
     )
+
+    await createActivity({
+      felhasznalo_id: req.user.id,
+      tipus: "kep_feltoltve",
+      cel_tipus,
+      cel_id,
+      szoveg: leiras || null
+    })
 
     res.json({ ok: true, id: result.insertId, fajl_utvonal })
   } catch (err) {

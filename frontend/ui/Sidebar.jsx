@@ -1,7 +1,13 @@
 import { useState } from "react"
 import { useAuth } from "../lib/auth"
 
-export default function Sidebar({ open, menu, onClose, onOpen, onMenuClick }) {
+export default function Sidebar({
+  open,
+  menu,
+  onClose,
+  onOpen,
+  onMenuClick
+}) {
   const { user, logout } = useAuth()
   const [profileOpen, setProfileOpen] = useState(false)
 
@@ -31,7 +37,11 @@ export default function Sidebar({ open, menu, onClose, onOpen, onMenuClick }) {
           >
             <div className="sidebar-profile-avatar">
               {profileImage ? (
-                <img src={profileImage} alt="Profilkép" className="sidebar-profile-avatarImg" />
+                <img
+                  src={profileImage}
+                  alt="Profilkép"
+                  className="sidebar-profile-avatarImg"
+                />
               ) : (
                 <i className="fas fa-user" />
               )}
@@ -68,6 +78,13 @@ export default function Sidebar({ open, menu, onClose, onOpen, onMenuClick }) {
                     <span>Profil</span>
                   </a>
 
+                  {String(user.role).toLowerCase() === "admin" && (
+                    <a className="sidebar-profile-menuItem" href="/admin">
+                      <i className="fas fa-shield-halved" />
+                      <span>Admin panel</span>
+                    </a>
+                  )}
+
                   <button
                     className="sidebar-profile-menuItem danger"
                     type="button"
@@ -85,6 +102,22 @@ export default function Sidebar({ open, menu, onClose, onOpen, onMenuClick }) {
         <div className="sidebar-menu-title">Kategóriák</div>
 
         <div className="menu-list sidebar-menu-list">
+          {user && (
+            <button
+              className="item sidebar-menu-item sidebar-menu-item-favorites"
+              onClick={() => {
+                setProfileOpen(false)
+                onMenuClick?.("kedvencek")
+              }}
+              type="button"
+            >
+              <div className="item-icon sidebar-menu-icon">
+                <i className="fas fa-heart" />
+              </div>
+              <div className="sidebar-menu-label">Kedvencek</div>
+            </button>
+          )}
+
           {menu.map(item => (
             <button
               key={item.id}

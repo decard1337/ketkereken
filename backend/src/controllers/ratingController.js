@@ -1,5 +1,6 @@
 import { pool } from "../config/db.js"
 import { celLetezik, normalizalCelTipus, resolveCelTitle } from "../utils/celHelpers.js"
+import { createActivity } from "../utils/activityHelpers.js"
 
 export async function createOrUpdateRating(req, res) {
   try {
@@ -41,6 +42,13 @@ export async function createOrUpdateRating(req, res) {
       "INSERT INTO ertekelesek (felhasznalo_id, cel_tipus, cel_id, pontszam, szoveg) VALUES (?,?,?,?,?)",
       [req.user.id, cel_tipus, cel_id, pont, szoveg || null]
     )
+    await createActivity({
+      felhasznalo_id: req.user.id,
+      tipus: "ertekeles_letrehozva",
+      cel_tipus,
+      cel_id,
+      extra: { pontszam: pont }
+    })
 
     res.json({ ok: true, modositva: false })
   } catch (err) {

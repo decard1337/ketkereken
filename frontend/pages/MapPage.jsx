@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react"
 import { useSearchParams } from "react-router-dom"
 import { api } from "../lib/api"
+import { useAuth } from "../lib/auth"
 
 import Splash from "../ui/Splash"
 import Sidebar from "../ui/Sidebar"
@@ -47,6 +48,7 @@ function getCelTipusFromSelectedType(type) {
 }
 
 export default function MapPage() {
+  const { user } = useAuth()
   const [searchParams] = useSearchParams()
 
   const [loading, setLoading] = useState(true)
@@ -70,6 +72,8 @@ export default function MapPage() {
   const [kedvencek, setKedvencek] = useState([])
   const [kedvencLoadingId, setKedvencLoadingId] = useState("")
 
+  const [loginModalOpen, setLoginModalOpen] = useState(false)
+
   useEffect(() => {
     let cancelled = false
 
@@ -82,7 +86,7 @@ export default function MapPage() {
           api.destinaciok(),
           api.esemenyek(),
           api.kolcsonzok(),
-          api.kedvencek().catch(() => [])
+          user ? api.kedvencek().catch(() => []) : Promise.resolve([])
         ])
 
         if (cancelled) return
@@ -135,7 +139,7 @@ export default function MapPage() {
     return () => {
       cancelled = true
     }
-  }, [searchParams])
+  }, [searchParams, user])
 
   useEffect(() => {
     if (locRequestTick === 0) return
@@ -149,6 +153,16 @@ export default function MapPage() {
   }, [locRequestTick])
 
   function openPanelByMenu(link) {
+    const value = String(link || "").toLowerCase()
+
+    if (value === "kedvencek") {
+      setActivePanel("kedvencek")
+      setSelected(null)
+      setSidebarOpen(false)
+      setLayerPanelOpen(false)
+      return
+    }
+
     const mapping = {
       utvonalak: "utvonalak",
       desztinaciok: "destinaciok",
@@ -158,7 +172,7 @@ export default function MapPage() {
       kolcsonzok: "kolcsonzok"
     }
 
-    const p = mapping[String(link || "").toLowerCase()]
+    const p = mapping[value]
     if (!p) return
 
     setActivePanel(p)
@@ -192,6 +206,11 @@ export default function MapPage() {
   }
 
   async function handleToggleKedvenc(cel_tipus, cel_id) {
+    if (!user) {
+      setLoginModalOpen(true)
+      return
+    }
+
     const key = `${cel_tipus}-${cel_id}`
 
     try {
@@ -209,13 +228,7 @@ export default function MapPage() {
           )
         }
 
-        return [
-          ...prev,
-          {
-            cel_tipus,
-            cel_id
-          }
-        ]
+        return [...prev, { cel_tipus, cel_id }]
       })
     } catch (err) {
       console.error("Kedvenc váltási hiba:", err)
@@ -271,6 +284,31 @@ export default function MapPage() {
 
     return [...d, ...e, ...k]
   }, [destinaciok, esemenyek, kolcsonzok])
+
+  const kedvencItems = useMemo(() => {
+    const allItems = [
+      ...utvonalak.map(item => ({ ...item, __type: "utvonal" })),
+      ...destinaciok.map(item => ({ ...item, __type: "destinacio" })),
+      ...esemenyek.map(item => ({ ...item, __type: "esemeny" })),
+      ...kolcsonzok.map(item => ({ ...item, __type: "kolcsonzo" }))
+    ]
+
+    return kedvencek
+      .map(k => {
+        const tipus = String(k.cel_tipus || "")
+        const matchType =
+          tipus === "utvonalak" ? "utvonal" :
+          tipus === "destinaciok" ? "destinacio" :
+          tipus === "esemenyek" ? "esemeny" :
+          tipus === "kolcsonzok" ? "kolcsonzo" :
+          ""
+
+        return allItems.find(
+          item => item.__type === matchType && String(item.id) === String(k.cel_id)
+        )
+      })
+      .filter(Boolean)
+  }, [kedvencek, utvonalak, destinaciok, esemenyek, kolcsonzok])
 
   return (
     <div id="app" className="map-page-theme">
@@ -357,6 +395,7 @@ export default function MapPage() {
         destinaciok={destinaciok}
         esemenyek={esemenyek}
         kolcsonzok={kolcsonzok}
+        kedvencItems={kedvencItems}
         selected={selected}
         onSelect={setSelected}
         isKedvenc={isKedvenc}
@@ -364,6 +403,43 @@ export default function MapPage() {
         kedvencLoadingId={kedvencLoadingId}
         getCelTipusFromSelectedType={getCelTipusFromSelectedType}
       />
+
+      {loginModalOpen && (
+        <div className="kk-login-modal-overlay" onClick={() => setLoginModalOpen(false)}>
+          <div className="kk-login-modal" onClick={e => e.stopPropagation()}>
+            <button
+              type="button"
+              className="kk-login-modal-close"
+              onClick={() => setLoginModalOpen(false)}
+            >
+              <i className="fa-solid fa-xmark" />
+            </button>
+
+            <div className="kk-login-modal-icon">
+              <i className="fa-regular fa-heart" />
+            </div>
+
+            <div className="kk-login-modal-title">Ehhez be kell jelentkezni</div>
+            <div className="kk-login-modal-text">
+              A kedvencek használatához először jelentkezz be a fiókodba.
+            </div>
+
+            <div className="kk-login-modal-actions">
+              <a href="/login" className="kk-login-modal-btn primary">
+                Bejelentkezés
+              </a>
+
+              <button
+                type="button"
+                className="kk-login-modal-btn ghost"
+                onClick={() => setLoginModalOpen(false)}
+              >
+                Mégse
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

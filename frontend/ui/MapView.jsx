@@ -207,20 +207,6 @@ function PopupPreview({
           )}
         </div>
 
-        <button
-          type="button"
-          className={"gm-popup-favBtn" + (kedvenc ? " active" : "")}
-          onClick={e => {
-            e.preventDefault()
-            e.stopPropagation()
-            onToggleKedvenc?.(celTipus, item.id)
-          }}
-          title={kedvenc ? "Kedvencekből törlés" : "Kedvencekhez adás"}
-          disabled={favLoading}
-        >
-          <i className={kedvenc ? "fa-solid fa-heart" : "fa-regular fa-heart"} />
-        </button>
-
         {kepek.length > 1 && !loading && (
           <button
             type="button"
@@ -237,11 +223,31 @@ function PopupPreview({
       </div>
 
       <div className="gm-popup-body">
-        <div className="gm-popup-title">{item.nev}</div>
+        <div className="gm-popup-topRow">
+          <div className="gm-popup-topMain">
+            <div className="gm-popup-title">{item.nev}</div>
 
-        {item.leiras && (
-          <div className="gm-popup-subtitle">{item.leiras}</div>
-        )}
+            {item.leiras && (
+              <div className="gm-popup-subtitle">{item.leiras}</div>
+            )}
+          </div>
+
+          <div className="gm-popup-topSide">
+            <button
+              type="button"
+              className={"gm-popup-favBtn" + (kedvenc ? " active" : "")}
+              onClick={e => {
+                e.preventDefault()
+                e.stopPropagation()
+                onToggleKedvenc?.(celTipus, item.id)
+              }}
+              title={kedvenc ? "Kedvencekből törlés" : "Kedvencekhez adás"}
+              disabled={favLoading}
+            >
+              <i className={kedvenc ? "fa-solid fa-heart" : "fa-regular fa-heart"} />
+            </button>
+          </div>
+        </div>
 
         <div className="gm-popup-rating">
           {renderStars(atlag)}

@@ -26,3 +26,20 @@ export function adminRequired(req, res, next) {
     next()
   })
 }
+
+export function authOptional(req, res, next) {
+  const token = getToken(req)
+
+  if (!token) {
+    req.user = null
+    return next()
+  }
+
+  try {
+    req.user = jwt.verify(token, JWT_SECRET)
+    next()
+  } catch (err) {
+    req.user = null
+    next()
+  }
+}

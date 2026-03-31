@@ -1,55 +1,52 @@
-const BASE = "http://localhost:3001/api"
+const API_BASE = "http://localhost:3001/api"
 
 async function req(path, options = {}) {
-  const config = {
+  const isFormData = options.body instanceof FormData
+
+  const res = await fetch(`${API_BASE}${path}`, {
+    method: options.method || "GET",
     credentials: "include",
-    method: options.method || "GET"
-  }
-
-  if (options.formData) {
-    config.body = options.formData
-  } else if (options.body) {
-    config.headers = { "Content-Type": "application/json" }
-    config.body = JSON.stringify(options.body)
-  }
-
-  const res = await fetch(`${BASE}${path}`, config)
-  const text = await res.text()
+    headers: isFormData
+      ? {}
+      : {
+          "Content-Type": "application/json",
+          ...(options.headers || {})
+        },
+    body: isFormData
+      ? options.body
+      : options.body
+      ? JSON.stringify(options.body)
+      : undefined
+  })
 
   let data = null
+
   try {
-    data = text ? JSON.parse(text) : null
+    data = await res.json()
   } catch {
     data = null
   }
 
   if (!res.ok) {
-    if (path === "/auth/me" && res.status === 401) {
-      return { user: null }
-    }
-
-    throw new Error(data?.error || `API hiba: ${res.status}`)
+    throw new Error(data?.error || "Hiba történt.")
   }
 
   return data
 }
 
 export const api = {
-  utvonalak: () => req("/utvonalak"),
-  destinaciok: () => req("/destinaciok"),
-  esemenyek: () => req("/esemenyek"),
-  kolcsonzok: () => req("/kolcsonzok"),
+  me: () => req("/auth/me"),
 
-  register: (email, username, password) =>
-    req("/auth/register", {
-      method: "POST",
-      body: { email, username, password }
-    }),
-
-  login: (email, password) =>
+  login: (email, jelszo) =>
     req("/auth/login", {
       method: "POST",
-      body: { email, password }
+      body: { email, jelszo }
+    }),
+
+  register: (felhasznalonev, email, jelszo) =>
+    req("/auth/register", {
+      method: "POST",
+      body: { felhasznalonev, email, jelszo }
     }),
 
   logout: () =>
@@ -57,10 +54,12 @@ export const api = {
       method: "POST"
     }),
 
-  me: () =>
-    req("/auth/me"),
+  utvonalak: () => req("/utvonalak"),
+  destinaciok: () => req("/destinaciok"),
+  esemenyek: () => req("/esemenyek"),
+  kolcsonzok: () => req("/kolcsonzok"),
 
-  publicProfile: username =>
+  publicProfile: (username) =>
     req(`/u/${encodeURIComponent(username)}`),
 
   profilMentese: (username, bio) =>
@@ -69,51 +68,17 @@ export const api = {
       body: { username, bio }
     }),
 
-  profilkepFeltoltes: file => {
+  profilkepFeltoltes: (file) => {
     const fd = new FormData()
     fd.append("file", file)
 
     return req("/profilom/profilkep", {
       method: "POST",
-      formData: fd
+      body: fd
     })
   },
 
-  adminList: tabla =>
-    req(`/admin/${encodeURIComponent(tabla)}`),
-
-  adminCreate: (tabla, body) =>
-    req(`/admin/${encodeURIComponent(tabla)}`, {
-      method: "POST",
-      body
-    }),
-
-  adminUpdate: (tabla, id, body) =>
-    req(`/admin/${encodeURIComponent(tabla)}/${encodeURIComponent(id)}`, {
-      method: "PUT",
-      body
-    }),
-
-  adminDelete: (tabla, id) =>
-    req(`/admin/${encodeURIComponent(tabla)}/${encodeURIComponent(id)}`, {
-      method: "DELETE"
-    }),
-
-  adminResetPassword: (id, newPassword) =>
-    req(`/admin/felhasznalok/${encodeURIComponent(id)}/jelszo`, {
-      method: "PUT",
-      body: { newPassword }
-    }),
-
-  adminUploadUserProfileImage: (id, file) => {
-    const fd = new FormData()
-    fd.append("file", file)
-
-    return req(`/admin/felhasznalok/${encodeURIComponent(id)}/profilkep`, {
-      method: "POST",
-      formData: fd
-    })
-  },
+  kedvencek: () => req("/kedvencek"),
 
   toggleKedvenc: (cel_tipus, cel_id) =>
     req("/kedvencek/toggle", {
@@ -121,13 +86,10 @@ export const api = {
       body: { cel_tipus, cel_id }
     }),
 
-  kedvencek: () =>
-    req("/kedvencek"),
+  ertekelesek: (cel_tipus, cel_id) =>
+    req(`/ertekelesek/${encodeURIComponent(cel_tipus)}/${encodeURIComponent(cel_id)}`),
 
-  kedvencStatusz: (cel_tipus, cel_id) =>
-    req(
-      `/kedvencek/status?cel_tipus=${encodeURIComponent(cel_tipus)}&cel_id=${encodeURIComponent(cel_id)}`
-    ),
+  sajatErtekelesek: () => req("/sajat/ertekelesek"),
 
   kuldErtekeles: (cel_tipus, cel_id, pontszam, szoveg) =>
     req("/ertekelesek", {
@@ -135,58 +97,64 @@ export const api = {
       body: { cel_tipus, cel_id, pontszam, szoveg }
     }),
 
-  ertekelesek: (cel_tipus, cel_id) =>
-    req(
-      `/ertekelesek?cel_tipus=${encodeURIComponent(cel_tipus)}&cel_id=${encodeURIComponent(cel_id)}`
-    ),
-
   updateSajatErtekeles: (id, pontszam, szoveg) =>
-    req(`/sajat/ertekelesek/${encodeURIComponent(id)}`, {
+    req(`/ertekelesek/sajat/${id}`, {
       method: "PUT",
       body: { pontszam, szoveg }
     }),
 
-  deleteSajatErtekeles: id =>
-    req(`/sajat/ertekelesek/${encodeURIComponent(id)}`, {
+  deleteSajatErtekeles: (id) =>
+    req(`/ertekelesek/sajat/${id}`, {
       method: "DELETE"
     }),
 
+  kepek: (cel_tipus, cel_id) =>
+    req(`/kepek/${encodeURIComponent(cel_tipus)}/${encodeURIComponent(cel_id)}`),
+
+  sajatKepek: () => req("/sajat/kepek"),
+
   kuldKep: (cel_tipus, cel_id, file, leiras = "") => {
     const fd = new FormData()
-    fd.append("cel_tipus", cel_tipus)
-    fd.append("cel_id", String(cel_id))
-    fd.append("leiras", leiras)
     fd.append("file", file)
+    fd.append("cel_tipus", cel_tipus)
+    fd.append("cel_id", cel_id)
+    fd.append("leiras", leiras)
 
     return req("/kepek", {
       method: "POST",
-      formData: fd
+      body: fd
     })
   },
 
-  kepek: (cel_tipus, cel_id) =>
-    req(
-      `/kepek?cel_tipus=${encodeURIComponent(cel_tipus)}&cel_id=${encodeURIComponent(cel_id)}`
-    ),
-
-  adminJovahagyando: () =>
-    req("/admin/jovahagyando"),
-
-  adminElfogad: (tipus, id) =>
-    req("/admin/elfogad", {
+  followToggle: (username) =>
+    req("/follow/toggle", {
       method: "POST",
-      body: { tipus, id }
+      body: { username }
     }),
 
-  adminElutasit: (tipus, id, indok = "") =>
-    req("/admin/elutasit", {
+  followStatus: (username) =>
+    req(`/follow/status/${encodeURIComponent(username)}`),
+
+  followers: (username) =>
+    req(`/follow/followers/${encodeURIComponent(username)}`),
+
+  following: (username) =>
+    req(`/follow/following/${encodeURIComponent(username)}`),
+
+  feed: () => req("/feed"),
+
+  userFeed: (username) =>
+    req(`/feed/${encodeURIComponent(username)}`),
+
+  createStatusPost: (szoveg) =>
+    req("/feed/statusz", {
       method: "POST",
-      body: { tipus, id, indok }
+      body: { szoveg }
     }),
 
-  sajatErtekelesek: () =>
-    req("/sajat/ertekelesek"),
-
-  sajatKepek: () =>
-    req("/sajat/kepek")
+  reactToActivity: (aktivitas_id, reakcio) =>
+    req("/feed/react", {
+      method: "POST",
+      body: { aktivitas_id, reakcio }
+    })
 }
