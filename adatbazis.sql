@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Gép: 127.0.0.1
--- Létrehozás ideje: 2026. Már 30. 14:23
+-- Létrehozás ideje: 2026. Már 31. 15:20
 -- Kiszolgáló verziója: 10.4.32-MariaDB
 -- PHP verzió: 8.2.12
 
@@ -20,6 +20,52 @@ SET time_zone = "+00:00";
 --
 -- Adatbázis: `ketkerek`
 --
+
+-- --------------------------------------------------------
+
+--
+-- Tábla szerkezet ehhez a táblához `aktivitasok`
+--
+
+CREATE TABLE `aktivitasok` (
+  `id` int(11) NOT NULL,
+  `felhasznalo_id` int(11) NOT NULL,
+  `tipus` varchar(50) NOT NULL,
+  `cel_tipus` varchar(50) DEFAULT NULL,
+  `cel_id` int(11) DEFAULT NULL,
+  `szoveg` text DEFAULT NULL,
+  `extra_json` text DEFAULT NULL,
+  `letrehozva` datetime DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- A tábla adatainak kiíratása `aktivitasok`
+--
+
+INSERT INTO `aktivitasok` (`id`, `felhasznalo_id`, `tipus`, `cel_tipus`, `cel_id`, `szoveg`, `extra_json`, `letrehozva`) VALUES
+(9, 3, 'statusz_poszt', NULL, NULL, 'heee', NULL, '2026-03-31 14:24:10'),
+(10, 3, 'statusz_poszt', NULL, NULL, 'xaaxxaxa', NULL, '2026-03-31 14:27:20');
+
+-- --------------------------------------------------------
+
+--
+-- Tábla szerkezet ehhez a táblához `aktivitas_reakciok`
+--
+
+CREATE TABLE `aktivitas_reakciok` (
+  `id` int(11) NOT NULL,
+  `aktivitas_id` int(11) NOT NULL,
+  `felhasznalo_id` int(11) NOT NULL,
+  `reakcio` varchar(20) NOT NULL,
+  `letrehozva` datetime DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- A tábla adatainak kiíratása `aktivitas_reakciok`
+--
+
+INSERT INTO `aktivitas_reakciok` (`id`, `aktivitas_id`, `felhasznalo_id`, `reakcio`, `letrehozva`) VALUES
+(1, 10, 3, 'bike', '2026-03-31 15:15:29');
 
 -- --------------------------------------------------------
 
@@ -56,7 +102,7 @@ INSERT INTO `destinaciok` (`id`, `nev`, `leiras`, `lat`, `lng`, `ertekeles`, `ti
 CREATE TABLE `ertekelesek` (
   `id` int(11) NOT NULL,
   `felhasznalo_id` int(11) NOT NULL,
-  `cel_tipus` enum('utvonalak','esemenyek','destinaciok','kolcsonzok','blippek') NOT NULL,
+  `cel_tipus` enum('utvonalak','esemenyek','destinaciok','kolcsonzok') NOT NULL,
   `cel_id` int(11) NOT NULL,
   `pontszam` tinyint(4) NOT NULL,
   `szoveg` text DEFAULT NULL,
@@ -139,10 +185,17 @@ INSERT INTO `felhasznalok` (`id`, `email`, `felhasznalonev`, `jelszo_hash`, `ran
 CREATE TABLE `kedvencek` (
   `id` int(11) NOT NULL,
   `felhasznalo_id` int(11) NOT NULL,
-  `cel_tipus` enum('utvonal','esemeny','destinacio','kolcsonzo','blipp') NOT NULL,
+  `cel_tipus` enum('utvonalak','esemenyek','destinaciok','kolcsonzok') NOT NULL,
   `cel_id` int(11) NOT NULL,
   `letrehozva` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- A tábla adatainak kiíratása `kedvencek`
+--
+
+INSERT INTO `kedvencek` (`id`, `felhasznalo_id`, `cel_tipus`, `cel_id`, `letrehozva`) VALUES
+(15, 3, 'esemenyek', 1, '2026-03-30 15:50:31');
 
 -- --------------------------------------------------------
 
@@ -153,7 +206,7 @@ CREATE TABLE `kedvencek` (
 CREATE TABLE `kepek` (
   `id` int(11) NOT NULL,
   `felhasznalo_id` int(11) NOT NULL,
-  `cel_tipus` enum('utvonalak','esemenyek','destinaciok','kolcsonzok','blippek') NOT NULL,
+  `cel_tipus` enum('utvonalak','esemenyek','destinaciok','kolcsonzok') NOT NULL,
   `cel_id` int(11) NOT NULL,
   `fajl_utvonal` varchar(255) NOT NULL,
   `leiras` varchar(255) DEFAULT NULL,
@@ -171,7 +224,7 @@ CREATE TABLE `kepek` (
 INSERT INTO `kepek` (`id`, `felhasznalo_id`, `cel_tipus`, `cel_id`, `fajl_utvonal`, `leiras`, `statusz`, `letrehozva`, `ellenorizte_admin`, `ellenorizve`, `elutasitas_indok`) VALUES
 (1, 3, 'esemenyek', 1, '/uploads/1774386942264-900386885.png', 'legjobb hely', 'elfogadva', '2026-03-24 21:15:42', NULL, NULL, NULL),
 (2, 3, 'esemenyek', 1, '/uploads/1774387799044-363849412.jpeg', NULL, 'elfogadva', '2026-03-24 21:29:59', NULL, NULL, NULL),
-(3, 3, 'kolcsonzok', 3, '/uploads/1774789375589-210501175.png', 'qwertr', 'fuggoben', '2026-03-29 13:02:55', NULL, NULL, NULL);
+(3, 3, 'kolcsonzok', 3, '/uploads/1774789375589-210501175.png', 'qwertr', 'elfogadva', '2026-03-29 13:02:55', 3, '2026-03-31 11:01:38', NULL);
 
 -- --------------------------------------------------------
 
@@ -203,6 +256,26 @@ INSERT INTO `kolcsonzok` (`id`, `nev`, `cim`, `lat`, `lng`, `ar`, `telefon`, `ny
 -- --------------------------------------------------------
 
 --
+-- Tábla szerkezet ehhez a táblához `kovetesek`
+--
+
+CREATE TABLE `kovetesek` (
+  `id` int(11) NOT NULL,
+  `koveto_id` int(11) NOT NULL,
+  `kovetett_id` int(11) NOT NULL,
+  `letrehozva` datetime DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- A tábla adatainak kiíratása `kovetesek`
+--
+
+INSERT INTO `kovetesek` (`id`, `koveto_id`, `kovetett_id`, `letrehozva`) VALUES
+(1, 3, 2, '2026-03-31 13:49:47');
+
+-- --------------------------------------------------------
+
+--
 -- Tábla szerkezet ehhez a táblához `utvonalak`
 --
 
@@ -230,6 +303,21 @@ INSERT INTO `utvonalak` (`id`, `cim`, `leiras`, `koordinatak`, `hossz`, `nehezse
 --
 -- Indexek a kiírt táblákhoz
 --
+
+--
+-- A tábla indexei `aktivitasok`
+--
+ALTER TABLE `aktivitasok`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `fk_aktivitas_felhasznalo` (`felhasznalo_id`);
+
+--
+-- A tábla indexei `aktivitas_reakciok`
+--
+ALTER TABLE `aktivitas_reakciok`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `uniq_aktivitas_reakcio` (`aktivitas_id`,`felhasznalo_id`),
+  ADD KEY `fk_reakcio_felhasznalo` (`felhasznalo_id`);
 
 --
 -- A tábla indexei `destinaciok`
@@ -287,6 +375,14 @@ ALTER TABLE `kolcsonzok`
   ADD PRIMARY KEY (`id`);
 
 --
+-- A tábla indexei `kovetesek`
+--
+ALTER TABLE `kovetesek`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `uniq_follow` (`koveto_id`,`kovetett_id`),
+  ADD KEY `fk_kovetes_kovetett` (`kovetett_id`);
+
+--
 -- A tábla indexei `utvonalak`
 --
 ALTER TABLE `utvonalak`
@@ -295,6 +391,18 @@ ALTER TABLE `utvonalak`
 --
 -- A kiírt táblák AUTO_INCREMENT értéke
 --
+
+--
+-- AUTO_INCREMENT a táblához `aktivitasok`
+--
+ALTER TABLE `aktivitasok`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
+
+--
+-- AUTO_INCREMENT a táblához `aktivitas_reakciok`
+--
+ALTER TABLE `aktivitas_reakciok`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT a táblához `destinaciok`
@@ -324,7 +432,7 @@ ALTER TABLE `felhasznalok`
 -- AUTO_INCREMENT a táblához `kedvencek`
 --
 ALTER TABLE `kedvencek`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16;
 
 --
 -- AUTO_INCREMENT a táblához `kepek`
@@ -339,6 +447,12 @@ ALTER TABLE `kolcsonzok`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
+-- AUTO_INCREMENT a táblához `kovetesek`
+--
+ALTER TABLE `kovetesek`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+
+--
 -- AUTO_INCREMENT a táblához `utvonalak`
 --
 ALTER TABLE `utvonalak`
@@ -347,6 +461,19 @@ ALTER TABLE `utvonalak`
 --
 -- Megkötések a kiírt táblákhoz
 --
+
+--
+-- Megkötések a táblához `aktivitasok`
+--
+ALTER TABLE `aktivitasok`
+  ADD CONSTRAINT `fk_aktivitas_felhasznalo` FOREIGN KEY (`felhasznalo_id`) REFERENCES `felhasznalok` (`id`) ON DELETE CASCADE;
+
+--
+-- Megkötések a táblához `aktivitas_reakciok`
+--
+ALTER TABLE `aktivitas_reakciok`
+  ADD CONSTRAINT `fk_reakcio_aktivitas` FOREIGN KEY (`aktivitas_id`) REFERENCES `aktivitasok` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `fk_reakcio_felhasznalo` FOREIGN KEY (`felhasznalo_id`) REFERENCES `felhasznalok` (`id`) ON DELETE CASCADE;
 
 --
 -- Megkötések a táblához `ertekelesek`
@@ -378,6 +505,13 @@ ALTER TABLE `kepek`
   ADD CONSTRAINT `fk_kepek_felhasznalo` FOREIGN KEY (`felhasznalo_id`) REFERENCES `felhasznalok` (`id`) ON DELETE CASCADE,
   ADD CONSTRAINT `kepek_ibfk_1` FOREIGN KEY (`felhasznalo_id`) REFERENCES `felhasznalok` (`id`) ON DELETE CASCADE,
   ADD CONSTRAINT `kepek_ibfk_2` FOREIGN KEY (`ellenorizte_admin`) REFERENCES `felhasznalok` (`id`) ON DELETE SET NULL;
+
+--
+-- Megkötések a táblához `kovetesek`
+--
+ALTER TABLE `kovetesek`
+  ADD CONSTRAINT `fk_kovetes_kovetett` FOREIGN KEY (`kovetett_id`) REFERENCES `felhasznalok` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `fk_kovetes_koveto` FOREIGN KEY (`koveto_id`) REFERENCES `felhasznalok` (`id`) ON DELETE CASCADE;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

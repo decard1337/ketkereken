@@ -1,5 +1,6 @@
 import { pool } from "../config/db.js"
 import { celLetezik, normalizalCelTipus, resolveCelTitle } from "../utils/celHelpers.js"
+import { createActivity } from "../utils/activityHelpers.js"
 
 export async function toggleFavorite(req, res) {
   try {
@@ -29,6 +30,13 @@ export async function toggleFavorite(req, res) {
       "INSERT INTO kedvencek (felhasznalo_id, cel_tipus, cel_id) VALUES (?,?,?)",
       [req.user.id, cel_tipus, cel_id]
     )
+
+    await createActivity({
+      felhasznalo_id: req.user.id,
+      tipus: "kedvenc_hozzaadva",
+      cel_tipus,
+      cel_id
+    })
 
     res.json({ action: "added", kedvelt: true })
   } catch (err) {

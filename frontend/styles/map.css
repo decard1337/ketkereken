@@ -3225,3 +3225,272 @@
   background:rgba(255,95,147,.12);
   border-color:rgba(255,95,147,.24);
 }
+
+/* ===== LOGIN MODAL KEDVENCHEZ ===== */
+
+.kk-login-modal-overlay{
+  position:fixed;
+  inset:0;
+  z-index:99999;
+  background:rgba(6,8,14,.64);
+  backdrop-filter:blur(10px);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:20px;
+}
+
+.kk-login-modal{
+  position:relative;
+  width:min(420px, 92vw);
+  padding:28px 24px 22px;
+  border-radius:24px;
+  border:1px solid rgba(255,255,255,.10);
+  background:
+    linear-gradient(180deg, rgba(20,24,34,.96), rgba(12,16,24,.96));
+  box-shadow:0 32px 90px rgba(0,0,0,.42);
+  text-align:center;
+}
+
+.kk-login-modal-close{
+  position:absolute;
+  top:14px;
+  right:14px;
+  width:40px;
+  height:40px;
+  border-radius:14px;
+  border:1px solid rgba(255,255,255,.10);
+  background:rgba(255,255,255,.05);
+  color:rgba(255,255,255,.88);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  cursor:pointer;
+}
+
+.kk-login-modal-close:hover{
+  background:rgba(255,255,255,.08);
+}
+
+.kk-login-modal-icon{
+  width:72px;
+  height:72px;
+  margin:0 auto 16px;
+  border-radius:22px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:linear-gradient(135deg, rgba(126,87,255,.24), rgba(0,122,255,.18));
+  border:1px solid rgba(255,255,255,.10);
+  color:#ff6b9f;
+  font-size:28px;
+}
+
+.kk-login-modal-title{
+  color:#fff;
+  font-size:24px;
+  font-weight:900;
+  letter-spacing:-.35px;
+}
+
+.kk-login-modal-text{
+  margin-top:10px;
+  color:rgba(255,255,255,.72);
+  font-size:15px;
+  line-height:1.6;
+}
+
+.kk-login-modal-actions{
+  margin-top:22px;
+  display:flex;
+  gap:10px;
+  justify-content:center;
+  flex-wrap:wrap;
+}
+
+.kk-login-modal-btn{
+  min-width:140px;
+  min-height:46px;
+  padding:0 16px;
+  border-radius:14px;
+  border:1px solid rgba(255,255,255,.10);
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  text-decoration:none;
+  cursor:pointer;
+  font-weight:700;
+}
+
+.kk-login-modal-btn.primary{
+  background:linear-gradient(135deg, rgba(126,87,255,.95), rgba(0,122,255,.85));
+  color:#fff;
+  border-color:transparent;
+}
+
+.kk-login-modal-btn.ghost{
+  background:rgba(255,255,255,.05);
+  color:#fff;
+}
+
+.kk-login-modal-btn.ghost:hover{
+  background:rgba(255,255,255,.08);
+}
+
+/* ===== KEDVENCEK UI TISZTÁBBAN ===== */
+
+.sidebar-menu-item-favorites .sidebar-menu-icon{
+  background: rgba(255,95,147,.10);
+  border-color: rgba(255,95,147,.18);
+  color: #ff5f93;
+}
+
+.panel-card-favLayout{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:16px;
+}
+
+.panel-card-main{
+  flex:1;
+  min-width:0;
+}
+
+.panel-card-side{
+  width:52px;
+  min-width:52px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  align-self:center;
+}
+
+.panel-card-favLayout .panel-cim{
+  margin-bottom:8px;
+}
+
+.panel-favBtn{
+  width:42px;
+  height:42px;
+  min-width:42px;
+  border-radius:14px;
+  border:1px solid rgba(255,95,147,.16);
+  background:rgba(255,95,147,.06);
+  color:#ff5f93;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  cursor:pointer;
+  transition:transform .12s ease, background .12s ease, border-color .12s ease, box-shadow .12s ease;
+  padding:0;
+  line-height:1;
+  box-shadow:none;
+}
+
+.panel-favBtn i{
+  font-size:22px;
+  line-height:1;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+.panel-favBtn:hover{
+  transform:translateY(-1px);
+  background:rgba(255,95,147,.10);
+  border-color:rgba(255,95,147,.24);
+}
+
+.panel-favBtn.active{
+  color:#ff5f93;
+  background:rgba(255,95,147,.12);
+  border-color:rgba(255,95,147,.26);
+}
+
+.gm-popup-topRow{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:14px;
+}
+
+.gm-popup-topMain{
+  flex:1;
+  min-width:0;
+}
+
+.gm-popup-topSide{
+  width:46px;
+  min-width:46px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+.gm-popup-favBtn{
+  width:40px;
+  height:40px;
+  min-width:40px;
+  border-radius:14px;
+  border:1px solid rgba(255,95,147,.16);
+  background:rgba(255,95,147,.06);
+  color:#ff5f93;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  cursor:pointer;
+  backdrop-filter:blur(10px);
+  transition:transform .12s ease, background .12s ease, border-color .12s ease;
+  padding:0;
+  line-height:1;
+  align-self:center;
+}
+
+.gm-popup-favBtn i{
+  font-size:20px;
+  line-height:1;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+.gm-popup-favBtn:hover{
+  transform:translateY(-1px);
+  background:rgba(255,95,147,.10);
+  border-color:rgba(255,95,147,.24);
+}
+
+.gm-popup-favBtn.active{
+  color:#ff5f93;
+  background:rgba(255,95,147,.12);
+  border-color:rgba(255,95,147,.26);
+}
+
+/* popup kedvenc szív fix */
+.gm-popup-favBtn,
+.gm-popup-favBtn i,
+.gm-popup-favBtn .fa-heart{
+  color:#ff5f93 !important;
+}
+
+.gm-popup-favBtn.active,
+.gm-popup-favBtn.active i,
+.gm-popup-favBtn.active .fa-heart,
+.gm-popup-favBtn .fa-solid.fa-heart{
+  color:#ff5f93 !important;
+}
+
+.gm-popup-favBtn .fa-regular.fa-heart{
+  color:#ff5f93 !important;
+}
+
+.gm-popup-favBtn{
+  border-color:rgba(255,95,147,.16) !important;
+  background:rgba(255,95,147,.06) !important;
+}
+
+.gm-popup-favBtn.active{
+  background:rgba(255,95,147,.12) !important;
+  border-color:rgba(255,95,147,.26) !important;
+}

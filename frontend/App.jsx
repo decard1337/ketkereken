@@ -9,6 +9,7 @@ import Profile from "./pages/Profile"
 import { AuthProvider, useAuth } from "./lib/auth"
 import NotFound from "./pages/NotFound"
 import LoadingScreen from "./components/LoadingScreen"
+import Feed from "./pages/Feed"
 
 function AdminRoute({ children }) {
   const { user, ready } = useAuth()
@@ -61,6 +62,7 @@ export default function App() {
             }
           />
           <Route path="/map" element={<MapPage />} />
+          <Route path="/feed" element={<Feed />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

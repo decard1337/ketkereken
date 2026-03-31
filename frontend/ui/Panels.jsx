@@ -9,6 +9,7 @@ export default function Panels({
   destinaciok,
   esemenyek,
   kolcsonzok,
+  kedvencItems = [],
   selected,
   onSelect,
   isKedvenc,
@@ -51,7 +52,26 @@ export default function Panels({
     type = "kolcsonzo"
   }
 
-  const detailsOpen = Boolean(selected && selected.type === type)
+  if (activePanel === "kedvencek") {
+    title = "Kedvencek"
+    icon = "heart"
+    items = kedvencItems
+    type = "kedvencek"
+  }
+
+  const detailsOpen =
+    Boolean(selected) &&
+    (type === "kedvencek"
+      ? ["utvonal", "destinacio", "esemeny", "kolcsonzo"].includes(selected.type)
+      : selected.type === type)
+
+  let detailType = type
+  let detailItems = items
+
+  if (type === "kedvencek" && selected) {
+    detailType = selected.type
+    detailItems = kedvencItems.filter(item => item.__type === selected.type)
+  }
 
   return (
     <>
@@ -110,8 +130,8 @@ export default function Panels({
 
           <div className="side-details-content">
             <PanelDetails
-              type={type}
-              items={items}
+              type={detailType}
+              items={detailItems}
               selected={selected}
             />
           </div>

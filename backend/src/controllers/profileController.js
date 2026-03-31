@@ -45,6 +45,27 @@ export async function getPublicProfile(req, res) {
       [viewedUser.id]
     )
 
+    const [[followersCountRow]] = await pool.query(
+      "SELECT COUNT(*) AS count FROM kovetesek WHERE kovetett_id=?",
+      [viewedUser.id]
+    )
+
+    const [[followingCountRow]] = await pool.query(
+      "SELECT COUNT(*) AS count FROM kovetesek WHERE koveto_id=?",
+      [viewedUser.id]
+    )
+
+    let following = false
+
+    if (req.user?.id) {
+      const [followRows] = await pool.query(
+        "SELECT id FROM kovetesek WHERE koveto_id=? AND kovetett_id=? LIMIT 1",
+        [req.user.id, viewedUser.id]
+      )
+
+      following = followRows.length > 0
+    }
+
     const ertekelesek = await Promise.all(ertekelesekRaw.map(async item => ({
       ...item,
       title: await resolveCelTitle(item.cel_tipus, item.cel_id)
@@ -67,7 +88,10 @@ export async function getPublicProfile(req, res) {
         role: viewedUser.rang,
         profilkep: viewedUser.profilkep,
         bio: viewedUser.bio,
-        letrehozva: viewedUser.letrehozva
+        letrehozva: viewedUser.letrehozva,
+        followersCount: Number(followersCountRow?.count || 0),
+        followingCount: Number(followingCountRow?.count || 0),
+        following
       },
       kedvencek,
       ertekelesek,
