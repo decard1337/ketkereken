@@ -77,7 +77,7 @@ Az alkalmazás felhasználói és admin oldallal is rendelkezik, így nemcsak b�
 
 ### Főoldal
 
-<img src="./docs/screenshots/fooldal_teszt.png" alt="Fooldal" width="480" />
+<img src="./docs/screenshots/fooldal_teszt.png" alt="Fooldal" />
 
 ### Térkép nézet
 
