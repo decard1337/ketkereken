@@ -55,8 +55,11 @@ export async function enrichActivityRows(rows) {
         extra,
         letrehozva: row.letrehozva,
         celTitle,
+
         reactions: row.reactions || {},
         myReaction: row.myReaction || null,
+        comments: Array.isArray(row.comments) ? row.comments : [],
+
         user: {
           id: row.user_id,
           username: row.felhasznalonev,
