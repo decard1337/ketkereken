@@ -130,9 +130,7 @@ function ReactionBar({ item, onReact }) {
 
     return () => {
       document.removeEventListener("mousedown", handleClickOutside)
-      if (closeTimerRef.current) {
-        clearTimeout(closeTimerRef.current)
-      }
+      if (closeTimerRef.current) clearTimeout(closeTimerRef.current)
     }
   }, [])
 
@@ -145,18 +143,12 @@ function ReactionBar({ item, onReact }) {
   }
 
   function closePickerDelayed() {
-    if (closeTimerRef.current) {
-      clearTimeout(closeTimerRef.current)
-    }
-
-    closeTimerRef.current = setTimeout(() => {
-      setOpen(false)
-    }, 180)
+    if (closeTimerRef.current) clearTimeout(closeTimerRef.current)
+    closeTimerRef.current = setTimeout(() => setOpen(false), 180)
   }
 
   async function handleReactionClick(key) {
     if (busy) return
-
     try {
       setBusy(true)
       await onReact(item.id, key)
@@ -227,6 +219,130 @@ function ReactionBar({ item, onReact }) {
   )
 }
 
+function CommentSection({ item, currentUser, onCreateComment, onDeleteComment }) {
+  const [text, setText] = useState("")
+  const [busy, setBusy] = useState(false)
+  const [err, setErr] = useState("")
+  const [open, setOpen] = useState(false)
+
+  async function submitComment(e) {
+    e.preventDefault()
+
+    const clean = String(text || "").trim()
+    if (!clean) {
+      setErr("Írj kommentet.")
+      return
+    }
+
+    try {
+      setBusy(true)
+      setErr("")
+      await onCreateComment(item.id, clean)
+      setText("")
+      setOpen(true)
+    } catch (error) {
+      setErr(error.message || "Nem sikerült elküldeni.")
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const comments = Array.isArray(item.comments) ? item.comments : []
+
+  return (
+    <div className="feed-comments">
+      <div className="feed-commentsHead">
+        <button
+          type="button"
+          className="feed-commentsToggle"
+          onClick={() => setOpen(v => !v)}
+        >
+          <i className="fa-regular fa-comment" />
+          <span>Kommentek</span>
+          <span className="feed-commentsCount">{comments.length}</span>
+        </button>
+      </div>
+
+      <form className="feed-commentForm" onSubmit={submitComment}>
+        <div className="feed-commentInputWrap">
+          {currentUser?.profilkep ? (
+            <img
+              src={`http://localhost:3001${currentUser.profilkep}`}
+              alt=""
+              className="feed-commentMeImg"
+            />
+          ) : (
+            <div className="feed-commentMeAvatar">
+              {(currentUser?.username || "U").slice(0, 1).toUpperCase()}
+            </div>
+          )}
+
+          <input
+            className="feed-commentInput"
+            type="text"
+            maxLength={400}
+            placeholder="Írj kommentet..."
+            value={text}
+            onChange={e => setText(e.target.value)}
+          />
+
+          <button type="submit" className="feed-commentSend" disabled={busy}>
+            {busy ? "..." : "Küldés"}
+          </button>
+        </div>
+
+        {err && <div className="feed-commentError">{err}</div>}
+      </form>
+
+      {open && (
+        <div className="feed-commentList">
+          {comments.length === 0 ? (
+            <div className="feed-commentEmpty">Még nincs komment.</div>
+          ) : (
+            comments.map(comment => (
+              <div key={comment.id} className="feed-commentRow">
+                {comment.user?.profilkep ? (
+                  <img
+                    src={`http://localhost:3001${comment.user.profilkep}`}
+                    alt=""
+                    className="feed-commentAvatarImg"
+                  />
+                ) : (
+                  <div className="feed-commentAvatar">
+                    {(comment.user?.username || "U").slice(0, 1).toUpperCase()}
+                  </div>
+                )}
+
+                <div className="feed-commentBubble">
+                  <div className="feed-commentMeta">
+                    <a href={`/u/${comment.user?.username}`} className="feed-commentUsername">
+                      {comment.user?.username || "Felhasználó"}
+                    </a>
+                    <span className="feed-commentTime">{formatTime(comment.letrehozva)}</span>
+                  </div>
+
+                  <div className="feed-commentText">{comment.szoveg}</div>
+                </div>
+
+                {comment.isOwn && (
+                  <button
+                    type="button"
+                    className="feed-commentDelete"
+                    onClick={() => onDeleteComment(comment.id)}
+                    title="Komment törlése"
+                  >
+                    <i className="fa-solid fa-trash" />
+                  </button>
+                )}
+              </div>
+            ))
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
 export default function Feed() {
   const { user, ready, logout } = useAuth()
 
@@ -247,14 +363,9 @@ export default function Feed() {
       try {
         setLoading(true)
         const res = await api.feed()
-
-        if (!cancelled) {
-          setItems(Array.isArray(res) ? res : [])
-        }
+        if (!cancelled) setItems(Array.isArray(res) ? res : [])
       } catch {
-        if (!cancelled) {
-          setItems([])
-        }
+        if (!cancelled) setItems([])
       } finally {
         if (!cancelled) setLoading(false)
       }
@@ -267,11 +378,15 @@ export default function Feed() {
     }
   }, [ready, user])
 
+  async function refreshFeed() {
+    const res = await api.feed()
+    setItems(Array.isArray(res) ? res : [])
+  }
+
   async function handlePostStatus(e) {
     e.preventDefault()
 
     const clean = String(statusText || "").trim()
-
     if (!clean) {
       setPostErr("Írj valamit.")
       return
@@ -281,11 +396,8 @@ export default function Feed() {
       setPosting(true)
       setPostErr("")
       setPostMsg("")
-
       await api.createStatusPost(clean)
-      const res = await api.feed()
-
-      setItems(Array.isArray(res) ? res : [])
+      await refreshFeed()
       setStatusText("")
       setPostMsg("Bejegyzés megosztva.")
     } catch (err) {
@@ -297,21 +409,25 @@ export default function Feed() {
 
   async function handleReact(aktivitasId, reakcio) {
     await api.reactToActivity(aktivitasId, reakcio)
-    const res = await api.feed()
-    setItems(Array.isArray(res) ? res : [])
+    await refreshFeed()
+  }
+
+  async function handleCreateComment(aktivitasId, szoveg) {
+    await api.createComment(aktivitasId, szoveg)
+    await refreshFeed()
+  }
+
+  async function handleDeleteComment(commentId) {
+    await api.deleteComment(commentId)
+    await refreshFeed()
   }
 
   const renderedItems = useMemo(() => {
-    return items.map(item => {
-      const activity = getActivityText(item)
-      const icon = getActivityIcon(item.tipus)
-
-      return {
-        ...item,
-        activity,
-        icon
-      }
-    })
+    return items.map(item => ({
+      ...item,
+      activity: getActivityText(item),
+      icon: getActivityIcon(item.tipus)
+    }))
   }, [items])
 
   if (!ready) return null
@@ -331,7 +447,6 @@ export default function Feed() {
             <div className="feed-mark">
               <i className="fa-solid fa-bicycle" />
             </div>
-
             <div>
               <div className="feed-brandName">Két Keréken</div>
               <div className="feed-brandSub">Közösségi feed</div>
@@ -491,17 +606,12 @@ export default function Feed() {
                       </div>
 
                       {isStatusPost ? (
-                        item.szoveg && (
-                          <div className="feed-statusPostBox">
-                            {item.szoveg}
-                          </div>
-                        )
+                        item.szoveg && <div className="feed-statusPostBox">{item.szoveg}</div>
                       ) : (
                         <>
                           {item.activity.title && (
                             <div className="feed-cardTitle">{item.activity.title}</div>
                           )}
-
                           {item.activity.body && (
                             <div className="feed-cardText">{item.activity.body}</div>
                           )}
@@ -521,6 +631,13 @@ export default function Feed() {
                       )}
 
                       <ReactionBar item={item} onReact={handleReact} />
+
+                      <CommentSection
+                        item={item}
+                        currentUser={user}
+                        onCreateComment={handleCreateComment}
+                        onDeleteComment={handleDeleteComment}
+                      />
                     </article>
                   )
                 })}

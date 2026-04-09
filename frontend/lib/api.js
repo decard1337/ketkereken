@@ -37,16 +37,16 @@ async function req(path, options = {}) {
 export const api = {
   me: () => req("/auth/me"),
 
-  login: (email, jelszo) =>
+  login: (email, password) =>
     req("/auth/login", {
       method: "POST",
-      body: { email, jelszo }
+      body: { email, password }
     }),
 
-  register: (felhasznalonev, email, jelszo) =>
+  register: (email, username, password) =>
     req("/auth/register", {
       method: "POST",
-      body: { felhasznalonev, email, jelszo }
+      body: { email, username, password }
     }),
 
   logout: () =>
@@ -156,5 +156,16 @@ export const api = {
     req("/feed/react", {
       method: "POST",
       body: { aktivitas_id, reakcio }
+    }),
+
+  createComment: (aktivitas_id, szoveg) =>
+    req("/feed/comment", {
+      method: "POST",
+      body: { aktivitas_id, szoveg }
+    }),
+
+  deleteComment: (commentId) =>
+    req(`/feed/comment/${commentId}`, {
+      method: "DELETE"
     })
 }

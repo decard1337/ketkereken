@@ -44,7 +44,7 @@ export default function Register() {
             </div>
             <div className="authx-brandText">
               <div className="authx-name">Két Keréken</div>
-              <div className="authx-sub">Minimal map platform</div>
+              <div className="authx-sub">Országos bringás közösségi platform</div>
             </div>
           </Link>
 
@@ -54,25 +54,25 @@ export default function Register() {
               <span>Regisztráció</span>
             </div>
 
-            <h1>Hozd létre a fiókod pár másodperc alatt.</h1>
+            <h1>Hozd létre a Két Keréken fiókodat.</h1>
 
             <p>
-              Csatlakozz, ments útvonalakat, használd a térképet, és ha admin vagy,
-              kezeld az egész rendszert egy helyről.
+              Regisztrálj, hogy elérd a közösségi funkciókat,
+              kedvenceket, aktivitásokat és a személyes profilodat.
             </p>
 
             <div className="authx-points">
               <div className="point">
                 <i className="fa-solid fa-user-plus" />
-                <span>Gyors regisztráció</span>
+                <span>Gyors fióklétrehozás</span>
               </div>
               <div className="point">
-                <i className="fa-solid fa-map" />
-                <span>Egységes dark UI minden oldalon</span>
+                <i className="fa-solid fa-route" />
+                <span>Útvonalak, helyek és események mentése</span>
               </div>
               <div className="point">
-                <i className="fa-solid fa-sparkles" />
-                <span>Minimal, modern felület</span>
+                <i className="fa-solid fa-users" />
+                <span>Csatlakozás a bringás közösséghez</span>
               </div>
             </div>
           </div>
@@ -92,14 +92,14 @@ export default function Register() {
 
               <form className="authx-form" onSubmit={submit}>
                 <label className="authx-field">
-                  <span>Email</span>
+                  <span>Email cím</span>
                   <div className="authx-inputWrap">
                     <i className="fa-solid fa-envelope" />
                     <input
                       type="email"
                       value={email}
                       onChange={e => setEmail(e.target.value)}
-                      placeholder="email@pelda.hu"
+                      placeholder="Add meg az email címed"
                       autoComplete="email"
                     />
                   </div>
@@ -113,7 +113,7 @@ export default function Register() {
                       type="text"
                       value={username}
                       onChange={e => setUsername(e.target.value)}
-                      placeholder="Felhasználónév"
+                      placeholder="Válassz felhasználónevet"
                       autoComplete="username"
                     />
                   </div>
@@ -127,7 +127,7 @@ export default function Register() {
                       type="password"
                       value={password}
                       onChange={e => setPassword(e.target.value)}
-                      placeholder="Minimum 6 karakter"
+                      placeholder="Hozz létre egy jelszót"
                       autoComplete="new-password"
                     />
                   </div>
@@ -137,13 +137,13 @@ export default function Register() {
 
                 <button className="authx-btn primary" type="submit" disabled={loading}>
                   <i className="fa-solid fa-user-plus" />
-                  <span>{loading ? "Létrehozás..." : "Fiók létrehozása"}</span>
+                  <span>{loading ? "Regisztráció..." : "Regisztráció"}</span>
                 </button>
               </form>
 
               <div className="authx-bottom">
                 <span>Van már fiókod?</span>
-                <Link to="/login">Bejelentkezés</Link>
+                <Link to="/login">Jelentkezz be</Link>
               </div>
             </div>
           </div>

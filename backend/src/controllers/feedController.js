@@ -50,6 +50,60 @@ async function attachReactions(rows, currentUserId = null) {
   }))
 }
 
+async function attachComments(rows, currentUserId = null) {
+  if (!rows.length) return []
+
+  const activityIds = rows.map((row) => row.id)
+  const placeholders = activityIds.map(() => "?").join(",")
+
+  const [commentRows] = await pool.query(
+    `SELECT
+       k.id,
+       k.aktivitas_id,
+       k.felhasznalo_id,
+       k.szoveg,
+       k.letrehozva,
+       f.felhasznalonev,
+       f.profilkep
+     FROM aktivitas_kommentek k
+     JOIN felhasznalok f ON f.id = k.felhasznalo_id
+     WHERE k.aktivitas_id IN (${placeholders})
+     ORDER BY k.letrehozva ASC`,
+    activityIds
+  )
+
+  const commentsMap = new Map()
+
+  for (const row of commentRows) {
+    if (!commentsMap.has(row.aktivitas_id)) {
+      commentsMap.set(row.aktivitas_id, [])
+    }
+
+    commentsMap.get(row.aktivitas_id).push({
+      id: row.id,
+      szoveg: row.szoveg,
+      letrehozva: row.letrehozva,
+      isOwn: currentUserId ? Number(currentUserId) === Number(row.felhasznalo_id) : false,
+      user: {
+        id: row.felhasznalo_id,
+        username: row.felhasznalonev,
+        profilkep: row.profilkep
+      }
+    })
+  }
+
+  return rows.map((row) => ({
+    ...row,
+    comments: commentsMap.get(row.id) || []
+  }))
+}
+
+async function buildFeedResponse(rows, currentUserId = null) {
+  const withReactions = await attachReactions(rows, currentUserId)
+  const withComments = await attachComments(withReactions, currentUserId)
+  return enrichActivityRows(withComments)
+}
+
 export async function getMyFeed(req, res) {
   try {
     const [rows] = await pool.query(
@@ -71,9 +125,7 @@ export async function getMyFeed(req, res) {
       [req.user.id, req.user.id]
     )
 
-    const withReactions = await attachReactions(rows, req.user.id)
-    const enriched = await enrichActivityRows(withReactions)
-
+    const enriched = await buildFeedResponse(rows, req.user.id)
     res.json(enriched)
   } catch (err) {
     console.error(err)
@@ -115,9 +167,7 @@ export async function getUserFeed(req, res) {
     )
 
     const currentUserId = req.user?.id || null
-    const withReactions = await attachReactions(rows, currentUserId)
-    const enriched = await enrichActivityRows(withReactions)
-
+    const enriched = await buildFeedResponse(rows, currentUserId)
     res.json(enriched)
   } catch (err) {
     console.error(err)
@@ -219,5 +269,88 @@ export async function reactToActivity(req, res) {
   } catch (err) {
     console.error(err)
     res.status(500).json({ error: "Reakció mentési hiba" })
+  }
+}
+
+export async function createComment(req, res) {
+  try {
+    const aktivitasId = Number(req.body?.aktivitas_id)
+    const szoveg = String(req.body?.szoveg || "").trim()
+
+    if (!Number.isFinite(aktivitasId) || aktivitasId <= 0) {
+      return res.status(400).json({ error: "Hibás aktivitás azonosító" })
+    }
+
+    if (!szoveg) {
+      return res.status(400).json({ error: "A komment üres" })
+    }
+
+    if (szoveg.length > 400) {
+      return res.status(400).json({ error: "A komment túl hosszú" })
+    }
+
+    const [activityRows] = await pool.query(
+      "SELECT id FROM aktivitasok WHERE id=? LIMIT 1",
+      [aktivitasId]
+    )
+
+    if (!activityRows.length) {
+      return res.status(404).json({ error: "Az aktivitás nem található" })
+    }
+
+    const [result] = await pool.query(
+      `INSERT INTO aktivitas_kommentek (aktivitas_id, felhasznalo_id, szoveg)
+       VALUES (?, ?, ?)`,
+      [aktivitasId, req.user.id, szoveg]
+    )
+
+    res.json({
+      ok: true,
+      id: result.insertId
+    })
+  } catch (err) {
+    console.error(err)
+    res.status(500).json({ error: "Komment mentési hiba" })
+  }
+}
+
+export async function deleteComment(req, res) {
+  try {
+    const commentId = Number(req.params.commentId)
+
+    if (!Number.isFinite(commentId) || commentId <= 0) {
+      return res.status(400).json({ error: "Hibás komment azonosító" })
+    }
+
+    const [rows] = await pool.query(
+      `SELECT id, felhasznalo_id
+       FROM aktivitas_kommentek
+       WHERE id=?
+       LIMIT 1`,
+      [commentId]
+    )
+
+    const comment = rows[0]
+
+    if (!comment) {
+      return res.status(404).json({ error: "A komment nem található" })
+    }
+
+    if (
+      Number(comment.felhasznalo_id) !== Number(req.user.id) &&
+      req.user.role !== "admin"
+    ) {
+      return res.status(403).json({ error: "Ehhez nincs jogosultságod" })
+    }
+
+    await pool.query(
+      "DELETE FROM aktivitas_kommentek WHERE id=?",
+      [commentId]
+    )
+
+    res.json({ ok: true })
+  } catch (err) {
+    console.error(err)
+    res.status(500).json({ error: "Komment törlési hiba" })
   }
 }

@@ -154,9 +154,7 @@ function ReactionBar({ item, onReact }) {
 
     return () => {
       document.removeEventListener("mousedown", handleClickOutside)
-      if (closeTimerRef.current) {
-        clearTimeout(closeTimerRef.current)
-      }
+      if (closeTimerRef.current) clearTimeout(closeTimerRef.current)
     }
   }, [])
 
@@ -169,18 +167,12 @@ function ReactionBar({ item, onReact }) {
   }
 
   function closePickerDelayed() {
-    if (closeTimerRef.current) {
-      clearTimeout(closeTimerRef.current)
-    }
-
-    closeTimerRef.current = setTimeout(() => {
-      setOpen(false)
-    }, 180)
+    if (closeTimerRef.current) clearTimeout(closeTimerRef.current)
+    closeTimerRef.current = setTimeout(() => setOpen(false), 180)
   }
 
   async function handleReactionClick(key) {
     if (busy) return
-
     try {
       setBusy(true)
       await onReact(item.id, key)
@@ -251,6 +243,130 @@ function ReactionBar({ item, onReact }) {
   )
 }
 
+function CommentSection({ item, currentUser, onCreateComment, onDeleteComment }) {
+  const [text, setText] = useState("")
+  const [busy, setBusy] = useState(false)
+  const [err, setErr] = useState("")
+  const [open, setOpen] = useState(false)
+
+  async function submitComment(e) {
+    e.preventDefault()
+
+    const clean = String(text || "").trim()
+    if (!clean) {
+      setErr("Írj kommentet.")
+      return
+    }
+
+    try {
+      setBusy(true)
+      setErr("")
+      await onCreateComment(item.id, clean)
+      setText("")
+      setOpen(true)
+    } catch (error) {
+      setErr(error.message || "Nem sikerült elküldeni.")
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const comments = Array.isArray(item.comments) ? item.comments : []
+
+  return (
+    <div className="prf-comments">
+      <div className="prf-commentsHead">
+        <button
+          type="button"
+          className="prf-commentsToggle"
+          onClick={() => setOpen(v => !v)}
+        >
+          <i className="fa-regular fa-comment" />
+          <span>Kommentek</span>
+          <span className="prf-commentsCount">{comments.length}</span>
+        </button>
+      </div>
+
+      <form className="prf-commentForm" onSubmit={submitComment}>
+        <div className="prf-commentInputWrap">
+          {currentUser?.profilkep ? (
+            <img
+              src={`http://localhost:3001${currentUser.profilkep}`}
+              alt=""
+              className="prf-commentMeImg"
+            />
+          ) : (
+            <div className="prf-commentMeAvatar">
+              {(currentUser?.username || "U").slice(0, 1).toUpperCase()}
+            </div>
+          )}
+
+          <input
+            className="prf-commentInput"
+            type="text"
+            maxLength={400}
+            placeholder="Írj kommentet..."
+            value={text}
+            onChange={e => setText(e.target.value)}
+          />
+
+          <button type="submit" className="prf-commentSend" disabled={busy}>
+            {busy ? "..." : "Küldés"}
+          </button>
+        </div>
+
+        {err && <div className="prf-commentError">{err}</div>}
+      </form>
+
+      {open && (
+        <div className="prf-commentList">
+          {comments.length === 0 ? (
+            <div className="prf-commentEmpty">Még nincs komment.</div>
+          ) : (
+            comments.map(comment => (
+              <div key={comment.id} className="prf-commentRow">
+                {comment.user?.profilkep ? (
+                  <img
+                    src={`http://localhost:3001${comment.user.profilkep}`}
+                    alt=""
+                    className="prf-commentAvatarImg"
+                  />
+                ) : (
+                  <div className="prf-commentAvatar">
+                    {(comment.user?.username || "U").slice(0, 1).toUpperCase()}
+                  </div>
+                )}
+
+                <div className="prf-commentBubble">
+                  <div className="prf-commentMeta">
+                    <a href={`/u/${comment.user?.username}`} className="prf-commentUsername">
+                      {comment.user?.username || "Felhasználó"}
+                    </a>
+                    <span className="prf-commentTime">{formatTime(comment.letrehozva)}</span>
+                  </div>
+
+                  <div className="prf-commentText">{comment.szoveg}</div>
+                </div>
+
+                {comment.isOwn && (
+                  <button
+                    type="button"
+                    className="prf-commentDelete"
+                    onClick={() => onDeleteComment(comment.id)}
+                    title="Komment törlése"
+                  >
+                    <i className="fa-solid fa-trash" />
+                  </button>
+                )}
+              </div>
+            ))
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
 export default function Profile() {
   const { user, ready, logout, updateUser } = useAuth()
   const { username } = useParams()
@@ -263,7 +379,6 @@ export default function Profile() {
   const [ertekelesek, setErtekelesek] = useState([])
   const [kepek, setKepek] = useState([])
   const [aktivitasok, setAktivitasok] = useState([])
-  const [aktivitasLoading, setAktivitasLoading] = useState(false)
 
   const [adatok, setAdatok] = useState({
     utvonalak: [],
@@ -426,24 +541,15 @@ export default function Profile() {
   }
 
   const resolvedFavorites = useMemo(() => {
-    return kedvencek.map(k => {
-      const resolved = resolveItem(k.cel_tipus, k.cel_id)
-      return { ...k, ...resolved }
-    })
+    return kedvencek.map(k => ({ ...k, ...resolveItem(k.cel_tipus, k.cel_id) }))
   }, [kedvencek, adatok])
 
   const resolvedRatings = useMemo(() => {
-    return ertekelesek.map(e => {
-      const resolved = resolveItem(e.cel_tipus, e.cel_id)
-      return { ...e, ...resolved }
-    })
+    return ertekelesek.map(e => ({ ...e, ...resolveItem(e.cel_tipus, e.cel_id) }))
   }, [ertekelesek, adatok])
 
   const resolvedImages = useMemo(() => {
-    return kepek.map(k => {
-      const resolved = resolveItem(k.cel_tipus, k.cel_id)
-      return { ...k, ...resolved }
-    })
+    return kepek.map(k => ({ ...k, ...resolveItem(k.cel_tipus, k.cel_id) }))
   }, [kepek, adatok])
 
   const renderedActivities = useMemo(() => {
@@ -463,7 +569,10 @@ export default function Profile() {
     }
   }, [resolvedFavorites])
 
-  const totalFavorites = resolvedFavorites.length
+  async function refreshUserFeed() {
+    const feedRes = await api.userFeed(username)
+    setAktivitasok(Array.isArray(feedRes) ? feedRes : [])
+  }
 
   async function submitProfileEdit(e) {
     e.preventDefault()
@@ -556,7 +665,6 @@ export default function Profile() {
       setFollowLoading(true)
       const res = await api.followToggle(username)
       const newFollowing = Boolean(res?.following)
-
       setIsFollowing(newFollowing)
       setFollowersCount(prev => prev + (newFollowing ? 1 : -1))
     } catch (err) {
@@ -568,7 +676,6 @@ export default function Profile() {
 
   async function openFollowersList() {
     if (!username) return
-
     try {
       setFollowListLoading(true)
       setFollowersOpen(true)
@@ -583,7 +690,6 @@ export default function Profile() {
 
   async function openFollowingList() {
     if (!username) return
-
     try {
       setFollowListLoading(true)
       setFollowingOpen(true)
@@ -598,8 +704,17 @@ export default function Profile() {
 
   async function handleReact(aktivitasId, reakcio) {
     await api.reactToActivity(aktivitasId, reakcio)
-    const feedRes = await api.userFeed(username)
-    setAktivitasok(Array.isArray(feedRes) ? feedRes : [])
+    await refreshUserFeed()
+  }
+
+  async function handleCreateComment(aktivitasId, szoveg) {
+    await api.createComment(aktivitasId, szoveg)
+    await refreshUserFeed()
+  }
+
+  async function handleDeleteComment(commentId) {
+    await api.deleteComment(commentId)
+    await refreshUserFeed()
   }
 
   if (!username) return <Navigate to="/" replace />
@@ -696,9 +811,7 @@ export default function Profile() {
                     disabled={followLoading}
                   >
                     <i className={`fa-solid ${isFollowing ? "fa-user-check" : "fa-user-plus"}`} />
-                    <span>
-                      {followLoading ? "Betöltés..." : isFollowing ? "Kikövetés" : "Követés"}
-                    </span>
+                    <span>{followLoading ? "Betöltés..." : isFollowing ? "Kikövetés" : "Követés"}</span>
                   </button>
                 )}
 
@@ -712,11 +825,7 @@ export default function Profile() {
                   <span>Csatlakozott: {formatJoinDate(profile.letrehozva)}</span>
                 </div>
 
-                {profile.bio && (
-                  <div className="prf-bio">
-                    {profile.bio}
-                  </div>
-                )}
+                {profile.bio && <div className="prf-bio">{profile.bio}</div>}
               </div>
 
               <div className="prf-followStats">
@@ -733,15 +842,13 @@ export default function Profile() {
 
               <div className="prf-stats">
                 <div className="prf-stat">
-                  <div className="prf-statNum">{totalFavorites}</div>
+                  <div className="prf-statNum">{resolvedFavorites.length}</div>
                   <div className="prf-statLabel">kedvenc</div>
                 </div>
-
                 <div className="prf-stat">
                   <div className="prf-statNum">{resolvedRatings.length}</div>
                   <div className="prf-statLabel">értékelés</div>
                 </div>
-
                 <div className="prf-stat">
                   <div className="prf-statNum">{resolvedImages.length}</div>
                   <div className="prf-statLabel">kép</div>
@@ -766,286 +873,216 @@ export default function Profile() {
               </div>
 
               <div className="prf-tabs">
-                <button
-                  className={`prf-tabBtn ${activeTab === "kedvencek" ? "active" : ""}`}
-                  onClick={() => setActiveTab("kedvencek")}
-                >
-                  Kedvencek
-                </button>
-
-                <button
-                  className={`prf-tabBtn ${activeTab === "ertekelesek" ? "active" : ""}`}
-                  onClick={() => setActiveTab("ertekelesek")}
-                >
-                  Értékelések
-                </button>
-
-                <button
-                  className={`prf-tabBtn ${activeTab === "kepek" ? "active" : ""}`}
-                  onClick={() => setActiveTab("kepek")}
-                >
-                  Képek
-                </button>
-
-                <button
-                  className={`prf-tabBtn ${activeTab === "aktivitas" ? "active" : ""}`}
-                  onClick={() => setActiveTab("aktivitas")}
-                >
-                  Aktivitás feed
-                </button>
+                <button className={`prf-tabBtn ${activeTab === "kedvencek" ? "active" : ""}`} onClick={() => setActiveTab("kedvencek")}>Kedvencek</button>
+                <button className={`prf-tabBtn ${activeTab === "ertekelesek" ? "active" : ""}`} onClick={() => setActiveTab("ertekelesek")}>Értékelések</button>
+                <button className={`prf-tabBtn ${activeTab === "kepek" ? "active" : ""}`} onClick={() => setActiveTab("kepek")}>Képek</button>
+                <button className={`prf-tabBtn ${activeTab === "aktivitas" ? "active" : ""}`} onClick={() => setActiveTab("aktivitas")}>Aktivitás feed</button>
               </div>
 
               {activeTab === "kedvencek" && (
-                <>
-                  {totalFavorites === 0 ? (
-                    <div className="prf-empty">
-                      <i className="fa-solid fa-heart-crack" />
-                      <h3>Nincsenek kedvencek</h3>
-                      <p>
-                        {isOwnProfile
-                          ? "Jelölj be elemeket a térképen, és itt megjelennek."
-                          : "Ennek a felhasználónak még nincs nyilvános kedvence."}
-                      </p>
-                    </div>
-                  ) : (
-                    <div className="prf-groups">
-                      {Object.entries(grouped).map(([type, items]) => {
-                        if (!items.length) return null
-
-                        return (
-                          <section key={type} className="prf-section">
-                            <div className="prf-sectionHead">
-                              <h2>{labelForType(type)}</h2>
-                              <span>{items.length} db</span>
-                            </div>
-
-                            <div className="prf-cards">
-                              {items.map(item => (
-                                <div key={item.id} className="prf-card">
-                                  <div className="prf-cardTop">
-                                    <div className="prf-cardType">{labelForType(item.cel_tipus)}</div>
-                                    <div className="prf-cardId">#{item.cel_id}</div>
-                                  </div>
-
-                                  <div className="prf-cardTitle">{item.title}</div>
-
-                                  {item.description && (
-                                    <div className="prf-cardText">{item.description}</div>
-                                  )}
-
-                                  <div className="prf-cardBottom">
-                                    <span className="prf-cardMeta">{item.meta || "Mentett elem"}</span>
-                                    <a href={routeForType(item.cel_tipus, item.cel_id)} className="prf-linkBtn">
-                                      <span>Megnyitás</span>
-                                      <i className="fa-solid fa-arrow-right" />
-                                    </a>
-                                  </div>
+                resolvedFavorites.length === 0 ? (
+                  <div className="prf-empty">
+                    <i className="fa-solid fa-heart-crack" />
+                    <h3>Nincsenek kedvencek</h3>
+                    <p>{isOwnProfile ? "Jelölj be elemeket a térképen, és itt megjelennek." : "Ennek a felhasználónak még nincs nyilvános kedvence."}</p>
+                  </div>
+                ) : (
+                  <div className="prf-groups">
+                    {Object.entries(grouped).map(([type, items]) => {
+                      if (!items.length) return null
+                      return (
+                        <section key={type} className="prf-section">
+                          <div className="prf-sectionHead">
+                            <h2>{labelForType(type)}</h2>
+                            <span>{items.length} db</span>
+                          </div>
+                          <div className="prf-cards">
+                            {items.map(item => (
+                              <div key={item.id} className="prf-card">
+                                <div className="prf-cardTop">
+                                  <div className="prf-cardType">{labelForType(item.cel_tipus)}</div>
+                                  <div className="prf-cardId">#{item.cel_id}</div>
                                 </div>
-                              ))}
-                            </div>
-                          </section>
-                        )
-                      })}
-                    </div>
-                  )}
-                </>
+                                <div className="prf-cardTitle">{item.title}</div>
+                                {item.description && <div className="prf-cardText">{item.description}</div>}
+                                <div className="prf-cardBottom">
+                                  <span className="prf-cardMeta">{item.meta || "Mentett elem"}</span>
+                                  <a href={routeForType(item.cel_tipus, item.cel_id)} className="prf-linkBtn">
+                                    <span>Megnyitás</span>
+                                    <i className="fa-solid fa-arrow-right" />
+                                  </a>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </section>
+                      )
+                    })}
+                  </div>
+                )
               )}
 
               {activeTab === "ertekelesek" && (
-                <>
-                  {resolvedRatings.length === 0 ? (
-                    <div className="prf-empty">
-                      <i className="fa-solid fa-star-half-stroke" />
-                      <h3>Nincsenek értékelések</h3>
-                      <p>
-                        {isOwnProfile
-                          ? "Ha értékelsz valamit a térképen, itt meg fog jelenni."
-                          : "Ennek a felhasználónak még nincs nyilvános értékelése."}
-                      </p>
+                resolvedRatings.length === 0 ? (
+                  <div className="prf-empty">
+                    <i className="fa-solid fa-star-half-stroke" />
+                    <h3>Nincsenek értékelések</h3>
+                    <p>{isOwnProfile ? "Ha értékelsz valamit a térképen, itt meg fog jelenni." : "Ennek a felhasználónak még nincs nyilvános értékelése."}</p>
+                  </div>
+                ) : (
+                  <section className="prf-section">
+                    <div className="prf-sectionHead">
+                      <h2>{isOwnProfile ? "Saját értékelések" : "Értékelések"}</h2>
+                      <span>{resolvedRatings.length} db</span>
                     </div>
-                  ) : (
-                    <section className="prf-section">
-                      <div className="prf-sectionHead">
-                        <h2>{isOwnProfile ? "Saját értékelések" : "Értékelések"}</h2>
-                        <span>{resolvedRatings.length} db</span>
-                      </div>
 
-                      {isOwnProfile && ratingErr && <div className="prf-formMsg err" style={{ marginBottom: 12 }}>{ratingErr}</div>}
-                      {isOwnProfile && ratingMsg && <div className="prf-formMsg ok" style={{ marginBottom: 12 }}>{ratingMsg}</div>}
+                    {isOwnProfile && ratingErr && <div className="prf-formMsg err" style={{ marginBottom: 12 }}>{ratingErr}</div>}
+                    {isOwnProfile && ratingMsg && <div className="prf-formMsg ok" style={{ marginBottom: 12 }}>{ratingMsg}</div>}
 
-                      <div className="prf-cards">
-                        {resolvedRatings.map(e => (
-                          <div key={e.id} className="prf-card">
-                            <div className="prf-cardTop">
-                              <div className="prf-cardType">{labelForType(e.cel_tipus)}</div>
+                    <div className="prf-cards">
+                      {resolvedRatings.map(e => (
+                        <div key={e.id} className="prf-card">
+                          <div className="prf-cardTop">
+                            <div className="prf-cardType">{labelForType(e.cel_tipus)}</div>
+                            {isOwnProfile && <div className={`prf-status prf-status-${e.statusz}`}>{statusLabel(e.statusz)}</div>}
+                          </div>
 
-                              {isOwnProfile && (
-                                <div className={`prf-status prf-status-${e.statusz}`}>
-                                  {statusLabel(e.statusz)}
+                          {editingRatingId === e.id ? (
+                            <>
+                              <div className="prf-cardTitle">{e.title}</div>
+
+                              <div style={{ display: "flex", gap: 8, marginTop: 8, marginBottom: 10 }}>
+                                {[1, 2, 3, 4, 5].map(i => (
+                                  <button
+                                    key={i}
+                                    type="button"
+                                    onClick={() => setEditingPontszam(i)}
+                                    style={{
+                                      border: "1px solid rgba(255,255,255,.10)",
+                                      background: "rgba(255,255,255,.06)",
+                                      color: i <= editingPontszam ? "#ffd54a" : "rgba(255,255,255,.45)",
+                                      borderRadius: 10,
+                                      width: 38,
+                                      height: 38,
+                                      cursor: "pointer"
+                                    }}
+                                  >
+                                    <i className="fa-solid fa-star" />
+                                  </button>
+                                ))}
+                              </div>
+
+                              <textarea
+                                className="prf-textarea"
+                                rows={4}
+                                value={editingSzoveg}
+                                onChange={ev => setEditingSzoveg(ev.target.value)}
+                              />
+
+                              <div style={{ display: "flex", gap: 10, marginTop: 12 }}>
+                                <button className="prf-btn primary" onClick={() => handleSaveRating(e.id)}>Mentés</button>
+                                <button className="prf-btn ghost" onClick={() => {
+                                  setEditingRatingId(null)
+                                  setEditingPontszam(0)
+                                  setEditingSzoveg("")
+                                }}>Mégse</button>
+                              </div>
+
+                              <div className="prf-cardText" style={{ marginTop: 10 }}>
+                                Módosítás után újra jóváhagyásra vár.
+                              </div>
+                            </>
+                          ) : (
+                            <>
+                              <div className="prf-cardTitle">{e.title}</div>
+                              <div className="prf-cardText">⭐ {e.pontszam} / 5</div>
+                              {e.szoveg && <div className="prf-cardText">{e.szoveg}</div>}
+
+                              {isOwnProfile && e.elutasitas_indok && (
+                                <div className="prf-formMsg err" style={{ marginTop: 12 }}>
+                                  Elutasítás indoka: {e.elutasitas_indok}
                                 </div>
                               )}
-                            </div>
 
-                            {editingRatingId === e.id ? (
-                              <>
-                                <div className="prf-cardTitle">{e.title}</div>
-
-                                <div style={{ display: "flex", gap: 8, marginTop: 8, marginBottom: 10 }}>
-                                  {[1, 2, 3, 4, 5].map(i => (
-                                    <button
-                                      key={i}
-                                      type="button"
-                                      onClick={() => setEditingPontszam(i)}
-                                      style={{
-                                        border: "1px solid rgba(255,255,255,.10)",
-                                        background: "rgba(255,255,255,.06)",
-                                        color: i <= editingPontszam ? "#ffd54a" : "rgba(255,255,255,.45)",
-                                        borderRadius: 10,
-                                        width: 38,
-                                        height: 38,
-                                        cursor: "pointer"
-                                      }}
-                                    >
-                                      <i className="fa-solid fa-star" />
-                                    </button>
-                                  ))}
-                                </div>
-
-                                <textarea
-                                  className="prf-textarea"
-                                  rows={4}
-                                  value={editingSzoveg}
-                                  onChange={ev => setEditingSzoveg(ev.target.value)}
-                                />
-
-                                <div style={{ display: "flex", gap: 10, marginTop: 12 }}>
-                                  <button className="prf-btn primary" onClick={() => handleSaveRating(e.id)}>
-                                    Mentés
-                                  </button>
+                              {isOwnProfile && (
+                                <div style={{ display: "flex", gap: 10, marginTop: 14 }}>
                                   <button
                                     className="prf-btn ghost"
                                     onClick={() => {
-                                      setEditingRatingId(null)
-                                      setEditingPontszam(0)
-                                      setEditingSzoveg("")
+                                      setEditingRatingId(e.id)
+                                      setEditingPontszam(Number(e.pontszam || 0))
+                                      setEditingSzoveg(e.szoveg || "")
                                     }}
                                   >
-                                    Mégse
+                                    Szerkesztés
+                                  </button>
+
+                                  <button
+                                    className="prf-btn ghost"
+                                    onClick={() => {
+                                      setDeleteTargetId(e.id)
+                                      setDeleteConfirmOpen(true)
+                                    }}
+                                  >
+                                    Törlés
                                   </button>
                                 </div>
-
-                                <div className="prf-cardText" style={{ marginTop: 10 }}>
-                                  Módosítás után újra jóváhagyásra vár.
-                                </div>
-                              </>
-                            ) : (
-                              <>
-                                <div className="prf-cardTitle">{e.title}</div>
-                                <div className="prf-cardText">⭐ {e.pontszam} / 5</div>
-
-                                {e.szoveg && (
-                                  <div className="prf-cardText">{e.szoveg}</div>
-                                )}
-
-                                {isOwnProfile && e.elutasitas_indok && (
-                                  <div className="prf-formMsg err" style={{ marginTop: 12 }}>
-                                    Elutasítás indoka: {e.elutasitas_indok}
-                                  </div>
-                                )}
-
-                                {isOwnProfile && (
-                                  <div style={{ display: "flex", gap: 10, marginTop: 14 }}>
-                                    <button
-                                      className="prf-btn ghost"
-                                      onClick={() => {
-                                        setEditingRatingId(e.id)
-                                        setEditingPontszam(Number(e.pontszam || 0))
-                                        setEditingSzoveg(e.szoveg || "")
-                                      }}
-                                    >
-                                      Szerkesztés
-                                    </button>
-
-                                    <button
-                                      className="prf-btn ghost"
-                                      onClick={() => {
-                                        setDeleteTargetId(e.id)
-                                        setDeleteConfirmOpen(true)
-                                      }}
-                                    >
-                                      Törlés
-                                    </button>
-                                  </div>
-                                )}
-                              </>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    </section>
-                  )}
-                </>
+                              )}
+                            </>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </section>
+                )
               )}
 
               {activeTab === "kepek" && (
-                <>
-                  {resolvedImages.length === 0 ? (
-                    <div className="prf-empty">
-                      <i className="fa-regular fa-image" />
-                      <h3>Nincsenek képek</h3>
-                      <p>
-                        {isOwnProfile
-                          ? "Ha feltöltesz képet, itt fog megjelenni."
-                          : "Ennek a felhasználónak még nincs nyilvános képe."}
-                      </p>
+                resolvedImages.length === 0 ? (
+                  <div className="prf-empty">
+                    <i className="fa-regular fa-image" />
+                    <h3>Nincsenek képek</h3>
+                    <p>{isOwnProfile ? "Ha feltöltesz képet, itt fog megjelenni." : "Ennek a felhasználónak még nincs nyilvános képe."}</p>
+                  </div>
+                ) : (
+                  <section className="prf-section">
+                    <div className="prf-sectionHead">
+                      <h2>{isOwnProfile ? "Feltöltött képek" : "Képek"}</h2>
+                      <span>{resolvedImages.length} db</span>
                     </div>
-                  ) : (
-                    <section className="prf-section">
-                      <div className="prf-sectionHead">
-                        <h2>{isOwnProfile ? "Feltöltött képek" : "Képek"}</h2>
-                        <span>{resolvedImages.length} db</span>
-                      </div>
 
-                      <div className="prf-cards">
-                        {resolvedImages.map(k => (
-                          <div key={k.id} className="prf-card">
-                            <div className="prf-cardTop">
-                              <div className="prf-cardType">{labelForType(k.cel_tipus)}</div>
-
-                              {isOwnProfile && (
-                                <div className={`prf-status prf-status-${k.statusz}`}>
-                                  {statusLabel(k.statusz)}
-                                </div>
-                              )}
-                            </div>
-
-                            <div className="prf-cardTitle">{k.title}</div>
-
-                            <img
-                              src={`http://localhost:3001${k.fajl_utvonal}`}
-                              alt=""
-                              className="prf-image"
-                            />
-
-                            {k.leiras && (
-                              <div className="prf-cardText">{k.leiras}</div>
-                            )}
-
-                            {isOwnProfile && k.elutasitas_indok && (
-                              <div className="prf-formMsg err" style={{ marginTop: 12 }}>
-                                Elutasítás indoka: {k.elutasitas_indok}
-                              </div>
-                            )}
-
-                            <div className="prf-cardBottom">
-                              <span className="prf-cardMeta">{k.meta || labelForType(k.cel_tipus)}</span>
-                            </div>
+                    <div className="prf-cards">
+                      {resolvedImages.map(k => (
+                        <div key={k.id} className="prf-card">
+                          <div className="prf-cardTop">
+                            <div className="prf-cardType">{labelForType(k.cel_tipus)}</div>
+                            {isOwnProfile && <div className={`prf-status prf-status-${k.statusz}`}>{statusLabel(k.statusz)}</div>}
                           </div>
-                        ))}
-                      </div>
-                    </section>
-                  )}
-                </>
+
+                          <div className="prf-cardTitle">{k.title}</div>
+
+                          <img
+                            src={`http://localhost:3001${k.fajl_utvonal}`}
+                            alt=""
+                            className="prf-image"
+                          />
+
+                          {k.leiras && <div className="prf-cardText">{k.leiras}</div>}
+
+                          {isOwnProfile && k.elutasitas_indok && (
+                            <div className="prf-formMsg err" style={{ marginTop: 12 }}>
+                              Elutasítás indoka: {k.elutasitas_indok}
+                            </div>
+                          )}
+
+                          <div className="prf-cardBottom">
+                            <span className="prf-cardMeta">{k.meta || labelForType(k.cel_tipus)}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </section>
+                )
               )}
 
               {activeTab === "aktivitas" && (
@@ -1055,20 +1092,11 @@ export default function Profile() {
                     <span>{renderedActivities.length} db</span>
                   </div>
 
-                  {aktivitasLoading ? (
-                    <div className="prf-empty">
-                      <i className="fa-solid fa-spinner fa-spin" />
-                      <h3>Betöltés...</h3>
-                    </div>
-                  ) : renderedActivities.length === 0 ? (
+                  {renderedActivities.length === 0 ? (
                     <div className="prf-empty">
                       <i className="fa-solid fa-wave-square" />
                       <h3>Még nincs aktivitás</h3>
-                      <p>
-                        {isOwnProfile
-                          ? "Ha kedvelsz, értékelsz, képet töltesz fel vagy posztolsz, itt fog megjelenni."
-                          : "Ennek a felhasználónak még nincs nyilvános aktivitása."}
-                      </p>
+                      <p>{isOwnProfile ? "Ha kedvelsz, értékelsz, képet töltesz fel vagy posztolsz, itt fog megjelenni." : "Ennek a felhasználónak még nincs nyilvános aktivitása."}</p>
                     </div>
                   ) : (
                     <div className="prf-activityList">
@@ -1110,29 +1138,17 @@ export default function Profile() {
                             </div>
 
                             {isStatusPost ? (
-                              item.szoveg && (
-                                <div className="prf-activityStatusPostBox">
-                                  {item.szoveg}
-                                </div>
-                              )
+                              item.szoveg && <div className="prf-activityStatusPostBox">{item.szoveg}</div>
                             ) : (
                               <>
-                                {item.activity.title && (
-                                  <div className="prf-activityTitle">{item.activity.title}</div>
-                                )}
-
-                                {item.activity.body && (
-                                  <div className="prf-activityText">{item.activity.body}</div>
-                                )}
+                                {item.activity.title && <div className="prf-activityTitle">{item.activity.title}</div>}
+                                {item.activity.body && <div className="prf-activityText">{item.activity.body}</div>}
                               </>
                             )}
 
                             {(item.cel_tipus && item.cel_id) && !isStatusPost && (
                               <div className="prf-activityBottom">
-                                <a
-                                  href={routeForType(item.cel_tipus, item.cel_id)}
-                                  className="prf-linkBtn"
-                                >
+                                <a href={routeForType(item.cel_tipus, item.cel_id)} className="prf-linkBtn">
                                   <span>Megnyitás</span>
                                   <i className="fa-solid fa-arrow-right" />
                                 </a>
@@ -1140,6 +1156,13 @@ export default function Profile() {
                             )}
 
                             <ReactionBar item={item} onReact={handleReact} />
+
+                            <CommentSection
+                              item={item}
+                              currentUser={user}
+                              onCreateComment={handleCreateComment}
+                              onDeleteComment={handleDeleteComment}
+                            />
                           </article>
                         )
                       })}
@@ -1166,43 +1189,25 @@ export default function Profile() {
             <form className="prf-form" onSubmit={submitProfileEdit}>
               <label className="prf-field">
                 <div className="prf-label">Felhasználónév</div>
-                <input
-                  className="prf-input"
-                  value={editName}
-                  onChange={e => setEditName(e.target.value)}
-                />
+                <input className="prf-input" value={editName} onChange={e => setEditName(e.target.value)} />
               </label>
 
               <label className="prf-field">
                 <div className="prf-label">Bio</div>
-                <textarea
-                  className="prf-textarea"
-                  rows={5}
-                  value={editBio}
-                  onChange={e => setEditBio(e.target.value)}
-                />
+                <textarea className="prf-textarea" rows={5} value={editBio} onChange={e => setEditBio(e.target.value)} />
               </label>
 
               <label className="prf-field">
                 <div className="prf-label">Profilkép</div>
-                <input
-                  className="prf-file"
-                  type="file"
-                  accept="image/*"
-                  onChange={e => setEditFile(e.target.files?.[0] || null)}
-                />
+                <input className="prf-file" type="file" accept="image/*" onChange={e => setEditFile(e.target.files?.[0] || null)} />
               </label>
 
               {saveErr && <div className="prf-formMsg err">{saveErr}</div>}
               {saveMsg && <div className="prf-formMsg ok">{saveMsg}</div>}
 
               <div className="prf-formActions">
-                <button type="button" className="prf-btn ghost" onClick={() => setEditOpen(false)}>
-                  Mégse
-                </button>
-                <button type="submit" className="prf-btn primary" disabled={saving}>
-                  {saving ? "Mentés..." : "Mentés"}
-                </button>
+                <button type="button" className="prf-btn ghost" onClick={() => setEditOpen(false)}>Mégse</button>
+                <button type="submit" className="prf-btn primary" disabled={saving}>{saving ? "Mentés..." : "Mentés"}</button>
               </div>
             </form>
           </div>
@@ -1211,24 +1216,18 @@ export default function Profile() {
 
       {deleteConfirmOpen && (
         <div className="prf-modal open">
-          <div
-            className="prf-modalOverlay"
-            onClick={() => {
-              setDeleteConfirmOpen(false)
-              setDeleteTargetId(null)
-            }}
-          />
+          <div className="prf-modalOverlay" onClick={() => {
+            setDeleteConfirmOpen(false)
+            setDeleteTargetId(null)
+          }} />
 
           <div className="prf-modalCard">
             <div className="prf-modalHead">
               <div className="prf-modalTitle">Értékelés törlése</div>
-              <button
-                className="prf-modalClose"
-                onClick={() => {
-                  setDeleteConfirmOpen(false)
-                  setDeleteTargetId(null)
-                }}
-              >
+              <button className="prf-modalClose" onClick={() => {
+                setDeleteConfirmOpen(false)
+                setDeleteTargetId(null)
+              }}>
                 <i className="fa-solid fa-xmark" />
               </button>
             </div>
@@ -1238,22 +1237,14 @@ export default function Profile() {
             </div>
 
             <div className="prf-formActions" style={{ marginTop: 20 }}>
-              <button
-                type="button"
-                className="prf-btn ghost"
-                onClick={() => {
-                  setDeleteConfirmOpen(false)
-                  setDeleteTargetId(null)
-                }}
-              >
+              <button type="button" className="prf-btn ghost" onClick={() => {
+                setDeleteConfirmOpen(false)
+                setDeleteTargetId(null)
+              }}>
                 Mégse
               </button>
 
-              <button
-                type="button"
-                className="prf-btn primary"
-                onClick={() => handleDeleteRating(deleteTargetId)}
-              >
+              <button type="button" className="prf-btn primary" onClick={() => handleDeleteRating(deleteTargetId)}>
                 Igen, törlöm
               </button>
             </div>
@@ -1281,11 +1272,7 @@ export default function Profile() {
                 {followersList.map(item => (
                   <a key={item.id} href={`/u/${item.username}`} className="prf-followRow">
                     {item.profilkep ? (
-                      <img
-                        src={`http://localhost:3001${item.profilkep}`}
-                        alt=""
-                        className="prf-followAvatarImg"
-                      />
+                      <img src={`http://localhost:3001${item.profilkep}`} alt="" className="prf-followAvatarImg" />
                     ) : (
                       <div className="prf-followAvatar">
                         {(item.username || "U").slice(0, 1).toUpperCase()}
@@ -1324,11 +1311,7 @@ export default function Profile() {
                 {followingList.map(item => (
                   <a key={item.id} href={`/u/${item.username}`} className="prf-followRow">
                     {item.profilkep ? (
-                      <img
-                        src={`http://localhost:3001${item.profilkep}`}
-                        alt=""
-                        className="prf-followAvatarImg"
-                      />
+                      <img src={`http://localhost:3001${item.profilkep}`} alt="" className="prf-followAvatarImg" />
                     ) : (
                       <div className="prf-followAvatar">
                         {(item.username || "U").slice(0, 1).toUpperCase()}
@@ -1363,17 +1346,8 @@ export default function Profile() {
             </div>
 
             <div className="prf-formActions" style={{ marginTop: 20 }}>
-              <button
-                type="button"
-                className="prf-btn ghost"
-                onClick={() => setLoginModalOpen(false)}
-              >
-                Mégse
-              </button>
-
-              <a href="/login" className="prf-btn primary">
-                Bejelentkezés
-              </a>
+              <button type="button" className="prf-btn ghost" onClick={() => setLoginModalOpen(false)}>Mégse</button>
+              <a href="/login" className="prf-btn primary">Bejelentkezés</a>
             </div>
           </div>
         </div>

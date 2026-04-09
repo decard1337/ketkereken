@@ -43,35 +43,35 @@ export default function Login() {
             </div>
             <div className="authx-brandText">
               <div className="authx-name">Két Keréken</div>
-              <div className="authx-sub">Minimal map platform</div>
+              <div className="authx-sub">Országos bringás közösségi platform</div>
             </div>
           </Link>
 
           <div className="authx-copy">
             <div className="authx-badge">
               <span className="dot" />
-              <span>Belépés</span>
+              <span>Bejelentkezés</span>
             </div>
 
-            <h1>Jelentkezz be, és folytasd ott, ahol abbahagytad.</h1>
+            <h1>Lépj be a Két Keréken felületére.</h1>
 
             <p>
-              Útvonalak, események, helyek és admin felület – ugyanabban a letisztult,
-              sötét UI-ban.
+              Jelentkezz be, hogy elérd a profilodat, a mentett helyeket,
+              az aktivitásaidat és a közösségi funkciókat.
             </p>
 
             <div className="authx-points">
               <div className="point">
-                <i className="fa-solid fa-route" />
-                <span>Gyors hozzáférés az útvonalakhoz</span>
+                <i className="fa-solid fa-map" />
+                <span>Országos térképes böngészés</span>
               </div>
               <div className="point">
-                <i className="fa-solid fa-location-dot" />
-                <span>Térkép-központú élmény</span>
+                <i className="fa-solid fa-heart" />
+                <span>Kedvencek, reakciók és kommentek</span>
               </div>
               <div className="point">
-                <i className="fa-solid fa-shield-halved" />
-                <span>Jogosultság alapú admin rendszer</span>
+                <i className="fa-solid fa-user-group" />
+                <span>Közösségi feed és profilkezelés</span>
               </div>
             </div>
           </div>
@@ -91,14 +91,14 @@ export default function Login() {
 
               <form className="authx-form" onSubmit={submit}>
                 <label className="authx-field">
-                  <span>Email</span>
+                  <span>Email cím</span>
                   <div className="authx-inputWrap">
                     <i className="fa-solid fa-envelope" />
                     <input
                       type="email"
                       value={email}
                       onChange={e => setEmail(e.target.value)}
-                      placeholder="email@pelda.hu"
+                      placeholder="Add meg az email címed"
                       autoComplete="email"
                     />
                   </div>
@@ -112,7 +112,7 @@ export default function Login() {
                       type="password"
                       value={password}
                       onChange={e => setPassword(e.target.value)}
-                      placeholder="Jelszó"
+                      placeholder="Add meg a jelszavad"
                       autoComplete="current-password"
                     />
                   </div>
@@ -122,13 +122,13 @@ export default function Login() {
 
                 <button className="authx-btn primary" type="submit" disabled={loading}>
                   <i className="fa-solid fa-right-to-bracket" />
-                  <span>{loading ? "Belépés..." : "Belépés"}</span>
+                  <span>{loading ? "Bejelentkezés..." : "Bejelentkezés"}</span>
                 </button>
               </form>
 
               <div className="authx-bottom">
-                <span>Nincs még fiókod?</span>
-                <Link to="/register">Regisztráció</Link>
+                <span>Még nincs fiókod?</span>
+                <Link to="/register">Regisztrálj</Link>
               </div>
             </div>
           </div>
