@@ -1,11 +1,11 @@
 -- phpMyAdmin SQL Dump
--- version 5.2.1
+-- version 5.2.3
 -- https://www.phpmyadmin.net/
 --
--- Gép: 127.0.0.1
--- Létrehozás ideje: 2026. Már 31. 15:20
--- Kiszolgáló verziója: 10.4.32-MariaDB
--- PHP verzió: 8.2.12
+-- Host: db:3306
+-- Generation Time: Apr 11, 2026 at 02:35 PM
+-- Server version: 8.4.8
+-- PHP Version: 8.3.30
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -18,74 +18,103 @@ SET time_zone = "+00:00";
 /*!40101 SET NAMES utf8mb4 */;
 
 --
--- Adatbázis: `ketkerek`
+-- Database: `ketkereken`
 --
 
 -- --------------------------------------------------------
 
 --
--- Tábla szerkezet ehhez a táblához `aktivitasok`
+-- Table structure for table `aktivitasok`
 --
 
 CREATE TABLE `aktivitasok` (
-  `id` int(11) NOT NULL,
-  `felhasznalo_id` int(11) NOT NULL,
-  `tipus` varchar(50) NOT NULL,
-  `cel_tipus` varchar(50) DEFAULT NULL,
-  `cel_id` int(11) DEFAULT NULL,
-  `szoveg` text DEFAULT NULL,
-  `extra_json` text DEFAULT NULL,
-  `letrehozva` datetime DEFAULT current_timestamp()
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+  `id` int NOT NULL,
+  `felhasznalo_id` int NOT NULL,
+  `tipus` varchar(50) COLLATE utf8mb4_hungarian_ci NOT NULL,
+  `cel_tipus` varchar(50) COLLATE utf8mb4_hungarian_ci DEFAULT NULL,
+  `cel_id` int DEFAULT NULL,
+  `szoveg` text COLLATE utf8mb4_hungarian_ci,
+  `extra_json` text COLLATE utf8mb4_hungarian_ci,
+  `letrehozva` datetime DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_hungarian_ci;
 
 --
--- A tábla adatainak kiíratása `aktivitasok`
+-- Dumping data for table `aktivitasok`
 --
 
 INSERT INTO `aktivitasok` (`id`, `felhasznalo_id`, `tipus`, `cel_tipus`, `cel_id`, `szoveg`, `extra_json`, `letrehozva`) VALUES
 (9, 3, 'statusz_poszt', NULL, NULL, 'heee', NULL, '2026-03-31 14:24:10'),
-(10, 3, 'statusz_poszt', NULL, NULL, 'xaaxxaxa', NULL, '2026-03-31 14:27:20');
+(10, 3, 'statusz_poszt', NULL, NULL, 'xaaxxaxa', NULL, '2026-03-31 14:27:20'),
+(11, 3, 'statusz_poszt', NULL, NULL, 'yxcyxcyxc', NULL, '2026-04-04 17:54:23'),
+(12, 3, 'statusz_poszt', NULL, NULL, 'Selenium teszt poszt 1775325296164', NULL, '2026-04-04 17:54:56'),
+(13, 3, 'statusz_poszt', NULL, NULL, 'Selenium teszt poszt 1775325397347', NULL, '2026-04-04 17:56:37'),
+(14, 3, 'statusz_poszt', NULL, NULL, 'Selenium teszt poszt 1775327247269', NULL, '2026-04-04 18:27:27'),
+(15, 3, 'statusz_poszt', NULL, NULL, 'Selenium teszt poszt 1775327470213', NULL, '2026-04-04 18:31:10');
 
 -- --------------------------------------------------------
 
 --
--- Tábla szerkezet ehhez a táblához `aktivitas_reakciok`
+-- Table structure for table `aktivitas_kommentek`
 --
 
-CREATE TABLE `aktivitas_reakciok` (
-  `id` int(11) NOT NULL,
-  `aktivitas_id` int(11) NOT NULL,
-  `felhasznalo_id` int(11) NOT NULL,
-  `reakcio` varchar(20) NOT NULL,
-  `letrehozva` datetime DEFAULT current_timestamp()
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- A tábla adatainak kiíratása `aktivitas_reakciok`
---
-
-INSERT INTO `aktivitas_reakciok` (`id`, `aktivitas_id`, `felhasznalo_id`, `reakcio`, `letrehozva`) VALUES
-(1, 10, 3, 'bike', '2026-03-31 15:15:29');
-
--- --------------------------------------------------------
-
---
--- Tábla szerkezet ehhez a táblához `destinaciok`
---
-
-CREATE TABLE `destinaciok` (
-  `id` int(11) NOT NULL,
-  `nev` varchar(200) NOT NULL,
-  `leiras` text DEFAULT NULL,
-  `lat` decimal(10,8) NOT NULL,
-  `lng` decimal(11,8) NOT NULL,
-  `ertekeles` decimal(2,1) DEFAULT NULL,
-  `tipus` enum('kilato','strand','muzeum','park','etterm') DEFAULT NULL,
-  `statusz` enum('aktiv','inaktiv') DEFAULT 'aktiv'
+CREATE TABLE `aktivitas_kommentek` (
+  `id` int NOT NULL,
+  `aktivitas_id` int NOT NULL,
+  `felhasznalo_id` int NOT NULL,
+  `szoveg` text COLLATE utf8mb4_hungarian_ci NOT NULL,
+  `letrehozva` datetime DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_hungarian_ci;
 
 --
--- A tábla adatainak kiíratása `destinaciok`
+-- Dumping data for table `aktivitas_kommentek`
+--
+
+INSERT INTO `aktivitas_kommentek` (`id`, `aktivitas_id`, `felhasznalo_id`, `szoveg`, `letrehozva`) VALUES
+(4, 10, 3, 'qweqwe', '2026-04-01 14:05:10'),
+(5, 12, 3, 'Selenium komment 1775325303677', '2026-04-04 17:55:03'),
+(6, 15, 3, 'Selenium komment 1775327474901', '2026-04-04 18:31:15');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `aktivitas_reakciok`
+--
+
+CREATE TABLE `aktivitas_reakciok` (
+  `id` int NOT NULL,
+  `aktivitas_id` int NOT NULL,
+  `felhasznalo_id` int NOT NULL,
+  `reakcio` varchar(20) COLLATE utf8mb4_hungarian_ci NOT NULL,
+  `letrehozva` datetime DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_hungarian_ci;
+
+--
+-- Dumping data for table `aktivitas_reakciok`
+--
+
+INSERT INTO `aktivitas_reakciok` (`id`, `aktivitas_id`, `felhasznalo_id`, `reakcio`, `letrehozva`) VALUES
+(1, 10, 3, 'bike', '2026-03-31 15:15:29'),
+(2, 12, 3, 'heart', '2026-04-04 17:55:02');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `destinaciok`
+--
+
+CREATE TABLE `destinaciok` (
+  `id` int NOT NULL,
+  `nev` varchar(200) COLLATE utf8mb4_hungarian_ci NOT NULL,
+  `leiras` text COLLATE utf8mb4_hungarian_ci,
+  `lat` decimal(10,8) NOT NULL,
+  `lng` decimal(11,8) NOT NULL,
+  `ertekeles` decimal(2,1) DEFAULT NULL,
+  `tipus` enum('kilato','strand','muzeum','park','etterm') COLLATE utf8mb4_hungarian_ci DEFAULT NULL,
+  `statusz` enum('aktiv','inaktiv') COLLATE utf8mb4_hungarian_ci DEFAULT 'aktiv'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_hungarian_ci;
+
+--
+-- Dumping data for table `destinaciok`
 --
 
 INSERT INTO `destinaciok` (`id`, `nev`, `leiras`, `lat`, `lng`, `ertekeles`, `tipus`, `statusz`) VALUES
@@ -96,25 +125,25 @@ INSERT INTO `destinaciok` (`id`, `nev`, `leiras`, `lat`, `lng`, `ertekeles`, `ti
 -- --------------------------------------------------------
 
 --
--- Tábla szerkezet ehhez a táblához `ertekelesek`
+-- Table structure for table `ertekelesek`
 --
 
 CREATE TABLE `ertekelesek` (
-  `id` int(11) NOT NULL,
-  `felhasznalo_id` int(11) NOT NULL,
-  `cel_tipus` enum('utvonalak','esemenyek','destinaciok','kolcsonzok') NOT NULL,
-  `cel_id` int(11) NOT NULL,
-  `pontszam` tinyint(4) NOT NULL,
-  `szoveg` text DEFAULT NULL,
-  `statusz` enum('fuggoben','elfogadva','elutasitva') NOT NULL DEFAULT 'fuggoben',
-  `letrehozva` timestamp NOT NULL DEFAULT current_timestamp(),
-  `ellenorizte_admin` int(11) DEFAULT NULL,
+  `id` int NOT NULL,
+  `felhasznalo_id` int NOT NULL,
+  `cel_tipus` enum('utvonalak','esemenyek','destinaciok','kolcsonzok') COLLATE utf8mb4_hungarian_ci NOT NULL,
+  `cel_id` int NOT NULL,
+  `pontszam` tinyint NOT NULL,
+  `szoveg` text COLLATE utf8mb4_hungarian_ci,
+  `statusz` enum('fuggoben','elfogadva','elutasitva') COLLATE utf8mb4_hungarian_ci NOT NULL DEFAULT 'fuggoben',
+  `letrehozva` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `ellenorizte_admin` int DEFAULT NULL,
   `ellenorizve` timestamp NULL DEFAULT NULL,
-  `elutasitas_indok` text DEFAULT NULL
-) ;
+  `elutasitas_indok` text COLLATE utf8mb4_hungarian_ci
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_hungarian_ci;
 
 --
--- A tábla adatainak kiíratása `ertekelesek`
+-- Dumping data for table `ertekelesek`
 --
 
 INSERT INTO `ertekelesek` (`id`, `felhasznalo_id`, `cel_tipus`, `cel_id`, `pontszam`, `szoveg`, `statusz`, `letrehozva`, `ellenorizte_admin`, `ellenorizve`, `elutasitas_indok`) VALUES
@@ -125,24 +154,24 @@ INSERT INTO `ertekelesek` (`id`, `felhasznalo_id`, `cel_tipus`, `cel_id`, `ponts
 -- --------------------------------------------------------
 
 --
--- Tábla szerkezet ehhez a táblához `esemenyek`
+-- Table structure for table `esemenyek`
 --
 
 CREATE TABLE `esemenyek` (
-  `id` int(11) NOT NULL,
-  `nev` varchar(200) NOT NULL,
-  `leiras` text DEFAULT NULL,
+  `id` int NOT NULL,
+  `nev` varchar(200) COLLATE utf8mb4_hungarian_ci NOT NULL,
+  `leiras` text COLLATE utf8mb4_hungarian_ci,
   `lat` decimal(10,8) NOT NULL,
   `lng` decimal(11,8) NOT NULL,
   `datum` date NOT NULL,
-  `resztvevok` int(11) DEFAULT NULL,
-  `tipus` enum('verseny','tura','fesztival','workshop') DEFAULT NULL,
-  `statusz` enum('aktiv','inaktiv') DEFAULT 'aktiv',
-  `utvonal_id` int(11) DEFAULT NULL
+  `resztvevok` int DEFAULT NULL,
+  `tipus` enum('verseny','tura','fesztival','workshop') COLLATE utf8mb4_hungarian_ci DEFAULT NULL,
+  `statusz` enum('aktiv','inaktiv') COLLATE utf8mb4_hungarian_ci DEFAULT 'aktiv',
+  `utvonal_id` int DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_hungarian_ci;
 
 --
--- A tábla adatainak kiíratása `esemenyek`
+-- Dumping data for table `esemenyek`
 --
 
 INSERT INTO `esemenyek` (`id`, `nev`, `leiras`, `lat`, `lng`, `datum`, `resztvevok`, `tipus`, `statusz`, `utvonal_id`) VALUES
@@ -153,23 +182,23 @@ INSERT INTO `esemenyek` (`id`, `nev`, `leiras`, `lat`, `lng`, `datum`, `resztvev
 -- --------------------------------------------------------
 
 --
--- Tábla szerkezet ehhez a táblához `felhasznalok`
+-- Table structure for table `felhasznalok`
 --
 
 CREATE TABLE `felhasznalok` (
-  `id` int(11) NOT NULL,
-  `email` varchar(255) NOT NULL,
-  `felhasznalonev` varchar(80) DEFAULT NULL,
-  `jelszo_hash` varchar(255) DEFAULT NULL,
-  `rang` enum('felhasznalo','admin') DEFAULT NULL,
-  `profilkep` varchar(255) DEFAULT NULL,
-  `bio` text DEFAULT NULL,
-  `letrehozva` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `id` int NOT NULL,
+  `email` varchar(255) COLLATE utf8mb4_hungarian_ci NOT NULL,
+  `felhasznalonev` varchar(80) COLLATE utf8mb4_hungarian_ci DEFAULT NULL,
+  `jelszo_hash` varchar(255) COLLATE utf8mb4_hungarian_ci DEFAULT NULL,
+  `rang` enum('felhasznalo','admin') COLLATE utf8mb4_hungarian_ci DEFAULT NULL,
+  `profilkep` varchar(255) COLLATE utf8mb4_hungarian_ci DEFAULT NULL,
+  `bio` text COLLATE utf8mb4_hungarian_ci,
+  `letrehozva` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `utolso_modositas` datetime DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_hungarian_ci;
 
 --
--- A tábla adatainak kiíratása `felhasznalok`
+-- Dumping data for table `felhasznalok`
 --
 
 INSERT INTO `felhasznalok` (`id`, `email`, `felhasznalonev`, `jelszo_hash`, `rang`, `profilkep`, `bio`, `letrehozva`, `utolso_modositas`) VALUES
@@ -179,19 +208,19 @@ INSERT INTO `felhasznalok` (`id`, `email`, `felhasznalonev`, `jelszo_hash`, `ran
 -- --------------------------------------------------------
 
 --
--- Tábla szerkezet ehhez a táblához `kedvencek`
+-- Table structure for table `kedvencek`
 --
 
 CREATE TABLE `kedvencek` (
-  `id` int(11) NOT NULL,
-  `felhasznalo_id` int(11) NOT NULL,
-  `cel_tipus` enum('utvonalak','esemenyek','destinaciok','kolcsonzok') NOT NULL,
-  `cel_id` int(11) NOT NULL,
-  `letrehozva` timestamp NOT NULL DEFAULT current_timestamp()
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+  `id` int NOT NULL,
+  `felhasznalo_id` int NOT NULL,
+  `cel_tipus` enum('utvonalak','esemenyek','destinaciok','kolcsonzok') COLLATE utf8mb4_hungarian_ci NOT NULL,
+  `cel_id` int NOT NULL,
+  `letrehozva` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_hungarian_ci;
 
 --
--- A tábla adatainak kiíratása `kedvencek`
+-- Dumping data for table `kedvencek`
 --
 
 INSERT INTO `kedvencek` (`id`, `felhasznalo_id`, `cel_tipus`, `cel_id`, `letrehozva`) VALUES
@@ -200,25 +229,25 @@ INSERT INTO `kedvencek` (`id`, `felhasznalo_id`, `cel_tipus`, `cel_id`, `letreho
 -- --------------------------------------------------------
 
 --
--- Tábla szerkezet ehhez a táblához `kepek`
+-- Table structure for table `kepek`
 --
 
 CREATE TABLE `kepek` (
-  `id` int(11) NOT NULL,
-  `felhasznalo_id` int(11) NOT NULL,
-  `cel_tipus` enum('utvonalak','esemenyek','destinaciok','kolcsonzok') NOT NULL,
-  `cel_id` int(11) NOT NULL,
-  `fajl_utvonal` varchar(255) NOT NULL,
-  `leiras` varchar(255) DEFAULT NULL,
-  `statusz` enum('fuggoben','elfogadva','elutasitva') NOT NULL DEFAULT 'fuggoben',
-  `letrehozva` timestamp NOT NULL DEFAULT current_timestamp(),
-  `ellenorizte_admin` int(11) DEFAULT NULL,
+  `id` int NOT NULL,
+  `felhasznalo_id` int NOT NULL,
+  `cel_tipus` enum('utvonalak','esemenyek','destinaciok','kolcsonzok') COLLATE utf8mb4_hungarian_ci NOT NULL,
+  `cel_id` int NOT NULL,
+  `fajl_utvonal` varchar(255) COLLATE utf8mb4_hungarian_ci NOT NULL,
+  `leiras` varchar(255) COLLATE utf8mb4_hungarian_ci DEFAULT NULL,
+  `statusz` enum('fuggoben','elfogadva','elutasitva') COLLATE utf8mb4_hungarian_ci NOT NULL DEFAULT 'fuggoben',
+  `letrehozva` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `ellenorizte_admin` int DEFAULT NULL,
   `ellenorizve` timestamp NULL DEFAULT NULL,
-  `elutasitas_indok` text DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+  `elutasitas_indok` text COLLATE utf8mb4_hungarian_ci
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_hungarian_ci;
 
 --
--- A tábla adatainak kiíratása `kepek`
+-- Dumping data for table `kepek`
 --
 
 INSERT INTO `kepek` (`id`, `felhasznalo_id`, `cel_tipus`, `cel_id`, `fajl_utvonal`, `leiras`, `statusz`, `letrehozva`, `ellenorizte_admin`, `ellenorizve`, `elutasitas_indok`) VALUES
@@ -229,23 +258,23 @@ INSERT INTO `kepek` (`id`, `felhasznalo_id`, `cel_tipus`, `cel_id`, `fajl_utvona
 -- --------------------------------------------------------
 
 --
--- Tábla szerkezet ehhez a táblához `kolcsonzok`
+-- Table structure for table `kolcsonzok`
 --
 
 CREATE TABLE `kolcsonzok` (
-  `id` int(11) NOT NULL,
-  `nev` varchar(200) NOT NULL,
-  `cim` varchar(300) NOT NULL,
+  `id` int NOT NULL,
+  `nev` varchar(200) COLLATE utf8mb4_hungarian_ci NOT NULL,
+  `cim` varchar(300) COLLATE utf8mb4_hungarian_ci NOT NULL,
   `lat` decimal(10,8) NOT NULL,
   `lng` decimal(11,8) NOT NULL,
-  `ar` varchar(100) DEFAULT NULL,
-  `telefon` varchar(20) DEFAULT NULL,
-  `nyitvatartas` varchar(100) DEFAULT NULL,
-  `statusz` enum('aktiv','inaktiv') DEFAULT 'aktiv'
+  `ar` varchar(100) COLLATE utf8mb4_hungarian_ci DEFAULT NULL,
+  `telefon` varchar(20) COLLATE utf8mb4_hungarian_ci DEFAULT NULL,
+  `nyitvatartas` varchar(100) COLLATE utf8mb4_hungarian_ci DEFAULT NULL,
+  `statusz` enum('aktiv','inaktiv') COLLATE utf8mb4_hungarian_ci DEFAULT 'aktiv'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_hungarian_ci;
 
 --
--- A tábla adatainak kiíratása `kolcsonzok`
+-- Dumping data for table `kolcsonzok`
 --
 
 INSERT INTO `kolcsonzok` (`id`, `nev`, `cim`, `lat`, `lng`, `ar`, `telefon`, `nyitvatartas`, `statusz`) VALUES
@@ -256,18 +285,18 @@ INSERT INTO `kolcsonzok` (`id`, `nev`, `cim`, `lat`, `lng`, `ar`, `telefon`, `ny
 -- --------------------------------------------------------
 
 --
--- Tábla szerkezet ehhez a táblához `kovetesek`
+-- Table structure for table `kovetesek`
 --
 
 CREATE TABLE `kovetesek` (
-  `id` int(11) NOT NULL,
-  `koveto_id` int(11) NOT NULL,
-  `kovetett_id` int(11) NOT NULL,
-  `letrehozva` datetime DEFAULT current_timestamp()
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+  `id` int NOT NULL,
+  `koveto_id` int NOT NULL,
+  `kovetett_id` int NOT NULL,
+  `letrehozva` datetime DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_hungarian_ci;
 
 --
--- A tábla adatainak kiíratása `kovetesek`
+-- Dumping data for table `kovetesek`
 --
 
 INSERT INTO `kovetesek` (`id`, `koveto_id`, `kovetett_id`, `letrehozva`) VALUES
@@ -276,23 +305,23 @@ INSERT INTO `kovetesek` (`id`, `koveto_id`, `kovetett_id`, `letrehozva`) VALUES
 -- --------------------------------------------------------
 
 --
--- Tábla szerkezet ehhez a táblához `utvonalak`
+-- Table structure for table `utvonalak`
 --
 
 CREATE TABLE `utvonalak` (
-  `id` int(11) NOT NULL,
-  `cim` varchar(200) NOT NULL,
-  `leiras` text DEFAULT NULL,
-  `koordinatak` text NOT NULL,
-  `hossz` varchar(50) DEFAULT NULL,
-  `nehezseg` enum('könnyű','közepes','nehéz') DEFAULT NULL,
-  `statusz` enum('aktiv','inaktiv') DEFAULT 'aktiv',
-  `idotartam` varchar(50) DEFAULT NULL,
-  `szintkulonbseg` varchar(50) DEFAULT NULL
+  `id` int NOT NULL,
+  `cim` varchar(200) COLLATE utf8mb4_hungarian_ci NOT NULL,
+  `leiras` text COLLATE utf8mb4_hungarian_ci,
+  `koordinatak` text COLLATE utf8mb4_hungarian_ci NOT NULL,
+  `hossz` varchar(50) COLLATE utf8mb4_hungarian_ci DEFAULT NULL,
+  `nehezseg` enum('könnyű','közepes','nehéz') COLLATE utf8mb4_hungarian_ci DEFAULT NULL,
+  `statusz` enum('aktiv','inaktiv') COLLATE utf8mb4_hungarian_ci DEFAULT 'aktiv',
+  `idotartam` varchar(50) COLLATE utf8mb4_hungarian_ci DEFAULT NULL,
+  `szintkulonbseg` varchar(50) COLLATE utf8mb4_hungarian_ci DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_hungarian_ci;
 
 --
--- A tábla adatainak kiíratása `utvonalak`
+-- Dumping data for table `utvonalak`
 --
 
 INSERT INTO `utvonalak` (`id`, `cim`, `leiras`, `koordinatak`, `hossz`, `nehezseg`, `statusz`, `idotartam`, `szintkulonbseg`) VALUES
@@ -301,18 +330,26 @@ INSERT INTO `utvonalak` (`id`, `cim`, `leiras`, `koordinatak`, `hossz`, `nehezse
 (6, 'Margit-sziget kör', 'Kellemes körút a Margit-szigeten', '[[47.5276,19.0462],[47.5260,19.0480],[47.5240,19.0500],[47.5220,19.0520],[47.5276,19.0462]]', '5 km', 'közepes', 'aktiv', '30 perc', '10 m');
 
 --
--- Indexek a kiírt táblákhoz
+-- Indexes for dumped tables
 --
 
 --
--- A tábla indexei `aktivitasok`
+-- Indexes for table `aktivitasok`
 --
 ALTER TABLE `aktivitasok`
   ADD PRIMARY KEY (`id`),
   ADD KEY `fk_aktivitas_felhasznalo` (`felhasznalo_id`);
 
 --
--- A tábla indexei `aktivitas_reakciok`
+-- Indexes for table `aktivitas_kommentek`
+--
+ALTER TABLE `aktivitas_kommentek`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `fk_aktivitas_komment_aktivitas` (`aktivitas_id`),
+  ADD KEY `fk_aktivitas_komment_felhasznalo` (`felhasznalo_id`);
+
+--
+-- Indexes for table `aktivitas_reakciok`
 --
 ALTER TABLE `aktivitas_reakciok`
   ADD PRIMARY KEY (`id`),
@@ -320,13 +357,13 @@ ALTER TABLE `aktivitas_reakciok`
   ADD KEY `fk_reakcio_felhasznalo` (`felhasznalo_id`);
 
 --
--- A tábla indexei `destinaciok`
+-- Indexes for table `destinaciok`
 --
 ALTER TABLE `destinaciok`
   ADD PRIMARY KEY (`id`);
 
 --
--- A tábla indexei `ertekelesek`
+-- Indexes for table `ertekelesek`
 --
 ALTER TABLE `ertekelesek`
   ADD PRIMARY KEY (`id`),
@@ -336,21 +373,21 @@ ALTER TABLE `ertekelesek`
   ADD KEY `fk_ertekelesek_admin` (`ellenorizte_admin`);
 
 --
--- A tábla indexei `esemenyek`
+-- Indexes for table `esemenyek`
 --
 ALTER TABLE `esemenyek`
   ADD PRIMARY KEY (`id`),
   ADD KEY `fk_esemeny_utvonal` (`utvonal_id`);
 
 --
--- A tábla indexei `felhasznalok`
+-- Indexes for table `felhasznalok`
 --
 ALTER TABLE `felhasznalok`
   ADD PRIMARY KEY (`id`),
   ADD UNIQUE KEY `email` (`email`);
 
 --
--- A tábla indexei `kedvencek`
+-- Indexes for table `kedvencek`
 --
 ALTER TABLE `kedvencek`
   ADD PRIMARY KEY (`id`),
@@ -359,7 +396,7 @@ ALTER TABLE `kedvencek`
   ADD KEY `idx_felhasznalo` (`felhasznalo_id`);
 
 --
--- A tábla indexei `kepek`
+-- Indexes for table `kepek`
 --
 ALTER TABLE `kepek`
   ADD PRIMARY KEY (`id`),
@@ -369,13 +406,13 @@ ALTER TABLE `kepek`
   ADD KEY `fk_kepek_admin` (`ellenorizte_admin`);
 
 --
--- A tábla indexei `kolcsonzok`
+-- Indexes for table `kolcsonzok`
 --
 ALTER TABLE `kolcsonzok`
   ADD PRIMARY KEY (`id`);
 
 --
--- A tábla indexei `kovetesek`
+-- Indexes for table `kovetesek`
 --
 ALTER TABLE `kovetesek`
   ADD PRIMARY KEY (`id`),
@@ -383,100 +420,113 @@ ALTER TABLE `kovetesek`
   ADD KEY `fk_kovetes_kovetett` (`kovetett_id`);
 
 --
--- A tábla indexei `utvonalak`
+-- Indexes for table `utvonalak`
 --
 ALTER TABLE `utvonalak`
   ADD PRIMARY KEY (`id`);
 
 --
--- A kiírt táblák AUTO_INCREMENT értéke
+-- AUTO_INCREMENT for dumped tables
 --
 
 --
--- AUTO_INCREMENT a táblához `aktivitasok`
+-- AUTO_INCREMENT for table `aktivitasok`
 --
 ALTER TABLE `aktivitasok`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16;
 
 --
--- AUTO_INCREMENT a táblához `aktivitas_reakciok`
+-- AUTO_INCREMENT for table `aktivitas_kommentek`
+--
+ALTER TABLE `aktivitas_kommentek`
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+
+--
+-- AUTO_INCREMENT for table `aktivitas_reakciok`
 --
 ALTER TABLE `aktivitas_reakciok`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
--- AUTO_INCREMENT a táblához `destinaciok`
+-- AUTO_INCREMENT for table `destinaciok`
 --
 ALTER TABLE `destinaciok`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
--- AUTO_INCREMENT a táblához `ertekelesek`
+-- AUTO_INCREMENT for table `ertekelesek`
 --
 ALTER TABLE `ertekelesek`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 
 --
--- AUTO_INCREMENT a táblához `esemenyek`
+-- AUTO_INCREMENT for table `esemenyek`
 --
 ALTER TABLE `esemenyek`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
 
 --
--- AUTO_INCREMENT a táblához `felhasznalok`
+-- AUTO_INCREMENT for table `felhasznalok`
 --
 ALTER TABLE `felhasznalok`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
--- AUTO_INCREMENT a táblához `kedvencek`
+-- AUTO_INCREMENT for table `kedvencek`
 --
 ALTER TABLE `kedvencek`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16;
 
 --
--- AUTO_INCREMENT a táblához `kepek`
+-- AUTO_INCREMENT for table `kepek`
 --
 ALTER TABLE `kepek`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
--- AUTO_INCREMENT a táblához `kolcsonzok`
+-- AUTO_INCREMENT for table `kolcsonzok`
 --
 ALTER TABLE `kolcsonzok`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
--- AUTO_INCREMENT a táblához `kovetesek`
+-- AUTO_INCREMENT for table `kovetesek`
 --
 ALTER TABLE `kovetesek`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
--- AUTO_INCREMENT a táblához `utvonalak`
+-- AUTO_INCREMENT for table `utvonalak`
 --
 ALTER TABLE `utvonalak`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
--- Megkötések a kiírt táblákhoz
+-- Constraints for dumped tables
 --
 
 --
--- Megkötések a táblához `aktivitasok`
+-- Constraints for table `aktivitasok`
 --
 ALTER TABLE `aktivitasok`
   ADD CONSTRAINT `fk_aktivitas_felhasznalo` FOREIGN KEY (`felhasznalo_id`) REFERENCES `felhasznalok` (`id`) ON DELETE CASCADE;
 
 --
--- Megkötések a táblához `aktivitas_reakciok`
+-- Constraints for table `aktivitas_kommentek`
+--
+ALTER TABLE `aktivitas_kommentek`
+  ADD CONSTRAINT `fk_aktivitas_komment_aktivitas` FOREIGN KEY (`aktivitas_id`) REFERENCES `aktivitasok` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `fk_aktivitas_komment_felhasznalo` FOREIGN KEY (`felhasznalo_id`) REFERENCES `felhasznalok` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `aktivitas_reakciok`
 --
 ALTER TABLE `aktivitas_reakciok`
   ADD CONSTRAINT `fk_reakcio_aktivitas` FOREIGN KEY (`aktivitas_id`) REFERENCES `aktivitasok` (`id`) ON DELETE CASCADE,
   ADD CONSTRAINT `fk_reakcio_felhasznalo` FOREIGN KEY (`felhasznalo_id`) REFERENCES `felhasznalok` (`id`) ON DELETE CASCADE;
 
 --
--- Megkötések a táblához `ertekelesek`
+-- Constraints for table `ertekelesek`
 --
 ALTER TABLE `ertekelesek`
   ADD CONSTRAINT `ertekelesek_ibfk_1` FOREIGN KEY (`felhasznalo_id`) REFERENCES `felhasznalok` (`id`) ON DELETE CASCADE,
@@ -485,20 +535,20 @@ ALTER TABLE `ertekelesek`
   ADD CONSTRAINT `fk_ertekelesek_felhasznalo` FOREIGN KEY (`felhasznalo_id`) REFERENCES `felhasznalok` (`id`) ON DELETE CASCADE;
 
 --
--- Megkötések a táblához `esemenyek`
+-- Constraints for table `esemenyek`
 --
 ALTER TABLE `esemenyek`
   ADD CONSTRAINT `fk_esemeny_utvonal` FOREIGN KEY (`utvonal_id`) REFERENCES `utvonalak` (`id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 --
--- Megkötések a táblához `kedvencek`
+-- Constraints for table `kedvencek`
 --
 ALTER TABLE `kedvencek`
   ADD CONSTRAINT `fk_kedvencek_felhasznalo` FOREIGN KEY (`felhasznalo_id`) REFERENCES `felhasznalok` (`id`) ON DELETE CASCADE,
   ADD CONSTRAINT `kedvencek_ibfk_1` FOREIGN KEY (`felhasznalo_id`) REFERENCES `felhasznalok` (`id`) ON DELETE CASCADE;
 
 --
--- Megkötések a táblához `kepek`
+-- Constraints for table `kepek`
 --
 ALTER TABLE `kepek`
   ADD CONSTRAINT `fk_kepek_admin` FOREIGN KEY (`ellenorizte_admin`) REFERENCES `felhasznalok` (`id`) ON DELETE SET NULL,
@@ -507,7 +557,7 @@ ALTER TABLE `kepek`
   ADD CONSTRAINT `kepek_ibfk_2` FOREIGN KEY (`ellenorizte_admin`) REFERENCES `felhasznalok` (`id`) ON DELETE SET NULL;
 
 --
--- Megkötések a táblához `kovetesek`
+-- Constraints for table `kovetesek`
 --
 ALTER TABLE `kovetesek`
   ADD CONSTRAINT `fk_kovetes_kovetett` FOREIGN KEY (`kovetett_id`) REFERENCES `felhasznalok` (`id`) ON DELETE CASCADE,
