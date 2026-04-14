@@ -73,6 +73,42 @@ Az alkalmazás felhasználói és admin oldallal is rendelkezik, így nemcsak b�
 
 ---
 
+
+## Munkamegosztás
+### Srámli Dávid Bence
+
+- az adatbázis létrehozása, módosítása és több verziójának kialakítása
+- a backendhez kapcsolódó alapok és technikai struktúrák kialakítása
+- az admin felület egyes részeinek elkészítése
+- a bejelentkezési felület és az adminpanel korai verzióinak kidolgozása
+- loading screen és 404-es oldal elkészítése
+- hibajavítások és technikai finomhangolások
+- projektmappák átszervezése és szerkezeti módosítások
+- dokumentáció és README egyes részeinek frissítése
+- merge-ek és különböző fejlesztési részek összevezetése
+
+### Hermann Zsombor
+
+- az aktivitásokhoz kapcsolódó funkciók fejlesztése
+- a követési rendszer kialakítása
+- a főoldal és a térképes megjelenítés vizuális átdolgozása
+- a design és a felhasználói felület több elemének továbbfejlesztése
+- onboarding és auth felületek egyes újratervezései
+- értékelésekhez és kedvelésekhez kapcsolódó backend funkciók megvalósítása
+- kisebb hibák javítása
+- dokumentációs és README módosítások
+- egyes fejlesztési részek összevonása és rendszerezése
+
+### Közös munka
+
+- az alkalmazás alapötlete és felépítése
+- a funkciók megtervezése
+- az oldalak szerkezetének kialakítása
+- a felhasználói élmény javítását szolgáló döntések
+- az egyes frontend és backend részek összehangolása
+
+---
+
 ## Képernyőképek
 
 ### Főoldal
