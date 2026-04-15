@@ -1,5 +1,8 @@
+<<<<<<< HEAD
 import { formatShortDate } from "../lib/date"
 
+=======
+>>>>>>> d3fda18727ce8b2d98d799fc65d84bbb28bad97f
 function getDifficultyClass(value) {
   const v = String(value || "").toLowerCase()
 
@@ -75,7 +78,11 @@ export default function PanelList({
                 {realType === "utvonal" && item.hossz && <span>{item.hossz} km</span>}
                 {realType === "utvonal" && item.idotartam && <span>{item.idotartam}</span>}
 
+<<<<<<< HEAD
                 {realType === "esemeny" && item.datum && <span>{formatShortDate(item.datum)}</span>}
+=======
+                {realType === "esemeny" && item.datum && <span>{item.datum}</span>}
+>>>>>>> d3fda18727ce8b2d98d799fc65d84bbb28bad97f
                 {realType === "esemeny" && item.resztvevok && <span>{item.resztvevok} fő</span>}
 
                 {realType === "kolcsonzo" && item.ar && <span>{item.ar}</span>}

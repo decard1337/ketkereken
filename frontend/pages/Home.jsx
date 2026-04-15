@@ -5,7 +5,10 @@ import { api } from "../lib/api"
 import { useAuth } from "../lib/auth"
 import "../styles/home.css"
 import Onboarding from "../components/Onboarding"
+<<<<<<< HEAD
 import { formatShortDate } from "../lib/date"
+=======
+>>>>>>> d3fda18727ce8b2d98d799fc65d84bbb28bad97f
 
 const tiles = "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
 
@@ -423,7 +426,11 @@ export default function Home() {
                 </div>
 
                 <div className="ketkereken-event-row-right">
+<<<<<<< HEAD
                   <div className="ketkereken-date-pill">{formatShortDate(e.datum)}</div>
+=======
+                  <div className="ketkereken-date-pill">{e.datum || "—"}</div>
+>>>>>>> d3fda18727ce8b2d98d799fc65d84bbb28bad97f
                   <a className="ketkereken-button ketkereken-button-soft" href={detailLink("esemeny", e.id)}>
                     <span>Mutasd</span>
                     <i className="fa-solid fa-arrow-right" />

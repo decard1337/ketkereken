@@ -1,6 +1,10 @@
 import { pool } from "../config/db.js"
 import { makeToken, setAuthCookie } from "../utils/authHelpers.js"
+<<<<<<< HEAD
 import { resolveCelTitle } from "../utils/typeHelpers.js"
+=======
+import { resolveCelTitle } from "../utils/celHelpers.js"
+>>>>>>> d3fda18727ce8b2d98d799fc65d84bbb28bad97f
 import { userToResponse } from "../utils/userHelpers.js"
 
 export async function getPublicProfile(req, res) {

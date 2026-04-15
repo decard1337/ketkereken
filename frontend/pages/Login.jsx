@@ -1,6 +1,9 @@
 import { useState } from "react"
 import { Link, useNavigate } from "react-router-dom"
+<<<<<<< HEAD
 import { api } from "../lib/api"
+=======
+>>>>>>> d3fda18727ce8b2d98d799fc65d84bbb28bad97f
 import { useAuth } from "../lib/auth"
 import "../styles/auth.css"
 
@@ -13,12 +16,15 @@ export default function Login() {
   const [err, setErr] = useState("")
   const [loading, setLoading] = useState(false)
 
+<<<<<<< HEAD
   const [forgotOpen, setForgotOpen] = useState(false)
   const [forgotEmail, setForgotEmail] = useState("")
   const [forgotLoading, setForgotLoading] = useState(false)
   const [forgotErr, setForgotErr] = useState("")
   const [forgotMsg, setForgotMsg] = useState("")
 
+=======
+>>>>>>> d3fda18727ce8b2d98d799fc65d84bbb28bad97f
   async function submit(e) {
     e.preventDefault()
     setErr("")
@@ -34,6 +40,7 @@ export default function Login() {
     }
   }
 
+<<<<<<< HEAD
   function openForgotPassword() {
     setForgotEmail(email.trim())
     setForgotErr("")
@@ -64,6 +71,8 @@ export default function Login() {
     }
   }
 
+=======
+>>>>>>> d3fda18727ce8b2d98d799fc65d84bbb28bad97f
   return (
     <div className="authx">
       <div className="authx-bg">
@@ -155,6 +164,7 @@ export default function Login() {
                   </div>
                 </label>
 
+<<<<<<< HEAD
                 <div className="authx-inlineAction">
                   <button
                     type="button"
@@ -165,6 +175,8 @@ export default function Login() {
                   </button>
                 </div>
 
+=======
+>>>>>>> d3fda18727ce8b2d98d799fc65d84bbb28bad97f
                 {err && <div className="authx-msg err">{err}</div>}
 
                 <button className="authx-btn primary" type="submit" disabled={loading}>
@@ -181,6 +193,7 @@ export default function Login() {
           </div>
         </div>
       </div>
+<<<<<<< HEAD
 
       {forgotOpen && (
         <div className="authx-forgotLayer">
@@ -245,6 +258,8 @@ export default function Login() {
           </div>
         </div>
       )}
+=======
+>>>>>>> d3fda18727ce8b2d98d799fc65d84bbb28bad97f
     </div>
   )
 }

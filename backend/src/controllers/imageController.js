@@ -1,5 +1,9 @@
 import { pool } from "../config/db.js"
+<<<<<<< HEAD
 import { celLetezik, normalizalCelTipus, resolveCelTitle } from "../utils/typeHelpers.js"
+=======
+import { celLetezik, normalizalCelTipus, resolveCelTitle } from "../utils/celHelpers.js"
+>>>>>>> d3fda18727ce8b2d98d799fc65d84bbb28bad97f
 import { createActivity } from "../utils/activityHelpers.js"
 
 export async function uploadImage(req, res) {
