@@ -54,12 +54,19 @@ services:
         condition: service_healthy
     environment:
       DB_HOST: db
-      DB_USER: appuser
-      DB_PASSWORD: apppw
+      DB_USER: root
+      DB_PASSWORD: rootpw
       DB_NAME: ketkereken
       PORT: 3001
       FRONTEND_ORIGIN: http://localhost:8090
       JWT_SECRET: nagyontitkosjelszo
+      SMTP_HOST: smtp.gmail.com
+      SMTP_PORT: 587
+      SMTP_SECURE: false
+      SMTP_USER: noreply.ketkereken@gmail.com
+      SMTP_PASS: dtfi pyft bkbn xpeu
+      SMTP_FROM: Két Keréken <noreply.ketkereken@gmail.com>
+      RESET_TOKEN_MINUTES: 30
     ports:
       - "3001:3001"
     volumes:

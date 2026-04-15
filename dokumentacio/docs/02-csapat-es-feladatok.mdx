@@ -1,0 +1,81 @@
+---
+id: rendszer-inditas
+sidebar_position: 2
+title: Rendszer indítása és leállítása
+---
+
+# A rendszer indítása és leállítása
+
+A Kétkeréken több összetevőből álló webalkalmazás. A frontend, a backend és az adatbázis összehangolt indítását egy központi indítófolyamat végzi, így a rendszer kezelése egyetlen parancsból elérhető.
+
+<div className="doc-card-grid">
+  <div className="doc-mini-card">
+    <h3>Frontend</h3>
+    <p>A felhasználói felület React és Vite alapokon fut, böngészőből érhető el.</p>
+  </div>
+  <div className="doc-mini-card">
+    <h3>Backend</h3>
+    <p>Express alapú API kezeli a hitelesítést, a publikus adatokat és a közösségi műveleteket.</p>
+  </div>
+  <div className="doc-mini-card">
+    <h3>Adatbázis</h3>
+    <p>MySQL alapú adattárolás felel a felhasználói, publikus és közösségi adatokért.</p>
+  </div>
+  <div className="doc-mini-card">
+    <h3>Docker környezet</h3>
+    <p>A szolgáltatások elkülönített konténerekben futnak, így a környezet reprodukálható és stabil.</p>
+  </div>
+</div>
+
+## Indítás lépései
+
+A webalkalmazás indításához a projekt főkönyvtárában az alábbi lépések szükségesek:
+
+1. Nyiss egy terminált, és navigálj a projekt gyökerébe.
+2. Ellenőrizd, hogy a Docker fut a gépen.
+3. Add ki az indító parancsot.
+
+```bash
+node indito.js
+```
+
+Az indítás során a rendszer automatikusan:
+
+- ellenőrzi a szükséges komponenseket,
+- elindítja a konténereket,
+- figyeli a backend állapotát,
+- és elérhetővé teszi az alkalmazást a böngészőből.
+
+<figure className="doc-shot">
+  ![A Kétkeréken indítási folyamata a terminálban](/img/ketkereken/inditas-terminal.png)
+  <figcaption>A sikeres indítás után a terminál visszajelzi az elérhető szolgáltatásokat.</figcaption>
+</figure>
+
+## Docker konténerek és futási környezet
+
+Az indítás után a Docker Desktop felületén is nyomon követhetők a futó szolgáltatások. Ez jól szemlélteti, hogy a frontend, a backend, a phpMyAdmin és a MySQL adatbázis egymástól elkülönülten, mégis összehangoltan működik.
+
+<figure className="doc-shot">
+  ![A Kétkeréken futó konténerei Docker Desktopban](/img/ketkereken/docker-desktop.png)
+  <figcaption>A rendszer fő konténerei: frontend, backend, adatbázis és admin segédfelület.</figcaption>
+</figure>
+
+## Leállítás és adatmentés
+
+A rendszer leállítása szintén egyszerű:
+
+1. Kattints arra a terminálablakra, ahol a `node indito.js` fut.
+2. Nyomd meg a <kbd>Ctrl</kbd> + <kbd>C</kbd> billentyűkombinációt.
+
+<div className="doc-note">
+  <strong>Beépített biztonsági mentés:</strong> az indító script nemcsak leállítja a szolgáltatásokat, hanem a konténerek leállítása előtt adatbázis-mentést is készít az <code>adatbazis.sql</code> fájlba.
+</div>
+
+Ez azt jelenti, hogy a felhasználói tartalmak, értékelések, kommentek és egyéb adatok a következő indításkor visszatölthetők, így a fejlesztés és a bemutatás közben sem vész el a rendszer aktuális állapota.
+
+## Miért előnyös ez a megoldás?
+
+- Egyszerűen bemutatható egyetlen paranccsal.
+- Fejlesztői és vizsgakörnyezetben is átlátható.
+- A konténerizált futtatás csökkenti a gépfüggő hibák esélyét.
+- A leállításkor készített mentés megkönnyíti a visszaállítást és az adatmegőrzést.

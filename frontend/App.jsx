@@ -4,6 +4,7 @@ import Home from "./pages/Home"
 import MapPage from "./pages/MapPage"
 import Login from "./pages/Login"
 import Register from "./pages/Register"
+import ResetPassword from "./pages/ResetPassword"
 import Admin from "./pages/Admin"
 import Profile from "./pages/Profile"
 import { AuthProvider, useAuth } from "./lib/auth"
@@ -51,6 +52,7 @@ export default function App() {
           <Route path="/terkep" element={<MapPage />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/reset-jelszo" element={<ResetPassword />} />
           <Route path="/profile" element={<ProfileRedirect />} />
           <Route path="/u/:username" element={<Profile />} />
           <Route

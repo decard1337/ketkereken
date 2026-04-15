@@ -1,13 +1,21 @@
 import bcrypt from "bcryptjs"
+import crypto from "crypto"
 import { pool } from "../config/db.js"
+import { APP_BASE_URL, RESET_TOKEN_MINUTES } from "../config/env.js"
 import { makeToken, setAuthCookie, clearAuthCookie } from "../utils/authHelpers.js"
 import { userToResponse } from "../utils/userHelpers.js"
+import { sendPasswordResetMail } from "../services/mailService.js"
+
+function normalizeEmail(email) {
+  return String(email || "").trim().toLowerCase()
+}
 
 export async function register(req, res) {
   try {
     const { email, username, password } = req.body || {}
+    const normalizedEmail = normalizeEmail(email)
 
-    if (!email || !username || !password) {
+    if (!normalizedEmail || !username || !password) {
       return res.status(400).json({ error: "Hiányzó mezők" })
     }
 
@@ -16,8 +24,8 @@ export async function register(req, res) {
     }
 
     const [emailRows] = await pool.query(
-      "SELECT id FROM felhasznalok WHERE email=? LIMIT 1",
-      [email]
+      "SELECT id FROM felhasznalok WHERE LOWER(email)=? LIMIT 1",
+      [normalizedEmail]
     )
 
     if (emailRows.length) {
@@ -37,12 +45,12 @@ export async function register(req, res) {
 
     const [result] = await pool.query(
       "INSERT INTO felhasznalok (email, felhasznalonev, jelszo_hash, rang) VALUES (?,?,?, 'felhasznalo')",
-      [email, username, passwordHash]
+      [normalizedEmail, username, passwordHash]
     )
 
     const tokenUser = {
       id: result.insertId,
-      email,
+      email: normalizedEmail,
       username,
       role: "felhasznalo",
       profilkep: null,
@@ -55,7 +63,7 @@ export async function register(req, res) {
     res.json({
       user: {
         id: result.insertId,
-        email,
+        email: normalizedEmail,
         username,
         role: "felhasznalo",
         profilkep: null,
@@ -72,14 +80,15 @@ export async function register(req, res) {
 export async function login(req, res) {
   try {
     const { email, password } = req.body || {}
+    const normalizedEmail = normalizeEmail(email)
 
-    if (!email || !password) {
+    if (!normalizedEmail || !password) {
       return res.status(400).json({ error: "Hiányzó mezők" })
     }
 
     const [rows] = await pool.query(
-      "SELECT id, email, felhasznalonev, jelszo_hash, rang, profilkep, bio, letrehozva FROM felhasznalok WHERE email=? LIMIT 1",
-      [email]
+      "SELECT id, email, felhasznalonev, jelszo_hash, rang, profilkep, bio, letrehozva FROM felhasznalok WHERE LOWER(email)=? LIMIT 1",
+      [normalizedEmail]
     )
 
     const user = rows[0]
@@ -130,5 +139,122 @@ export async function me(req, res) {
   } catch (err) {
     console.error(err)
     res.status(500).json({ error: "Felhasználó lekérdezési hiba" })
+  }
+}
+
+export async function requestPasswordReset(req, res) {
+  try {
+    const normalizedEmail = normalizeEmail(req.body?.email)
+
+    if (!normalizedEmail) {
+      return res.status(400).json({ error: "Add meg az email címet" })
+    }
+
+    const [rows] = await pool.query(
+      "SELECT id, email FROM felhasznalok WHERE LOWER(email)=? LIMIT 1",
+      [normalizedEmail]
+    )
+
+    const user = rows[0]
+
+    if (user) {
+      const rawToken = crypto.randomBytes(32).toString("hex")
+      const tokenHash = crypto.createHash("sha256").update(rawToken).digest("hex")
+      const expiresAt = new Date(Date.now() + RESET_TOKEN_MINUTES * 60 * 1000)
+
+      await pool.query(
+        `UPDATE felhasznalok
+         SET reset_token_hash=?, reset_token_lejar=?, reset_token_letrehozva=NOW()
+         WHERE id=?`,
+        [tokenHash, expiresAt, user.id]
+      )
+
+      const resetUrl = `${APP_BASE_URL.replace(/\/$/, "")}/reset-jelszo?token=${encodeURIComponent(rawToken)}`
+      await sendPasswordResetMail({ to: user.email, resetUrl })
+    }
+
+    res.json({
+      ok: true,
+      message: "Ha létezik fiók ehhez az email címhez, elküldtük a jelszó-visszaállító linket."
+    })
+  } catch (err) {
+    console.error(err)
+    res.status(500).json({ error: "Jelszó-visszaállítási hiba" })
+  }
+}
+
+export async function verifyPasswordResetToken(req, res) {
+  try {
+    const token = String(req.query?.token || "").trim()
+
+    if (!token) {
+      return res.status(400).json({ error: "Hiányzó token" })
+    }
+
+    const tokenHash = crypto.createHash("sha256").update(token).digest("hex")
+
+    const [rows] = await pool.query(
+      `SELECT id FROM felhasznalok
+       WHERE reset_token_hash=?
+         AND reset_token_lejar IS NOT NULL
+         AND reset_token_lejar > NOW()
+       LIMIT 1`,
+      [tokenHash]
+    )
+
+    if (!rows.length) {
+      return res.status(400).json({ valid: false, error: "Érvénytelen vagy lejárt link" })
+    }
+
+    res.json({ valid: true })
+  } catch (err) {
+    console.error(err)
+    res.status(500).json({ error: "Token ellenőrzési hiba" })
+  }
+}
+
+export async function resetPassword(req, res) {
+  try {
+    const token = String(req.body?.token || "").trim()
+    const password = String(req.body?.password || "")
+
+    if (!token || !password) {
+      return res.status(400).json({ error: "Hiányzó mezők" })
+    }
+
+    if (password.length < 6) {
+      return res.status(400).json({ error: "A jelszónak legalább 6 karakteresnek kell lennie" })
+    }
+
+    const tokenHash = crypto.createHash("sha256").update(token).digest("hex")
+
+    const [rows] = await pool.query(
+      `SELECT id FROM felhasznalok
+       WHERE reset_token_hash=?
+         AND reset_token_lejar IS NOT NULL
+         AND reset_token_lejar > NOW()
+       LIMIT 1`,
+      [tokenHash]
+    )
+
+    const user = rows[0]
+    if (!user) {
+      return res.status(400).json({ error: "Érvénytelen vagy lejárt link" })
+    }
+
+    const passwordHash = await bcrypt.hash(password, 12)
+
+    await pool.query(
+      `UPDATE felhasznalok
+       SET jelszo_hash=?, reset_token_hash=NULL, reset_token_lejar=NULL, reset_token_letrehozva=NULL
+       WHERE id=?`,
+      [passwordHash, user.id]
+    )
+
+    clearAuthCookie(res)
+    res.json({ ok: true, message: "A jelszó sikeresen módosítva lett." })
+  } catch (err) {
+    console.error(err)
+    res.status(500).json({ error: "Jelszó módosítási hiba" })
   }
 }

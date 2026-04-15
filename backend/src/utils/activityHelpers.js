@@ -1,5 +1,5 @@
 import { pool } from "../config/db.js"
-import { resolveCelTitle } from "./celHelpers.js"
+import { resolveCelTitle } from "./typeHelpers.js"
 
 export async function createActivity({
   felhasznalo_id,

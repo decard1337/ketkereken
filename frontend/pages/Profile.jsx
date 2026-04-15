@@ -3,6 +3,7 @@ import { Navigate, useParams } from "react-router-dom"
 import { api } from "../lib/api"
 import { useAuth } from "../lib/auth"
 import "../styles/profile.css"
+import { formatShortDate } from "../lib/date"
 
 const REACTIONS = [
   { key: "heart", emoji: "❤️", label: "Tetszik" },
@@ -536,7 +537,7 @@ export default function Profile() {
     return {
       title: found.cim || found.nev || `${labelForType(cel_tipus)} #${cel_id}`,
       description: found.leiras || found.cim || "",
-      meta: found.hossz || found.datum || found.tipus || ""
+      meta: found.hossz || formatShortDate(found.datum) || found.tipus || ""
     }
   }
 
@@ -744,6 +745,13 @@ export default function Profile() {
               <i className="fa-solid fa-map" />
               <span>Térkép</span>
             </a>
+
+            {user && (
+              <a href="/feed" className="prf-btn ghost">
+                <i className="fa-solid fa-rss" />
+                <span>Feed</span>
+              </a>
+            )}
 
             {user ? (
               <button className="prf-btn primary" onClick={logout}>

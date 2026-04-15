@@ -54,6 +54,21 @@ export const api = {
       method: "POST"
     }),
 
+  forgotPassword: (email) =>
+    req("/auth/forgot-password", {
+      method: "POST",
+      body: { email }
+    }),
+
+  verifyResetToken: (token) =>
+    req(`/auth/reset-password/verify?token=${encodeURIComponent(token)}`),
+
+  resetPassword: (token, password) =>
+    req("/auth/reset-password", {
+      method: "POST",
+      body: { token, password }
+    }),
+
   utvonalak: () => req("/utvonalak"),
   destinaciok: () => req("/destinaciok"),
   esemenyek: () => req("/esemenyek"),
@@ -87,7 +102,9 @@ export const api = {
     }),
 
   ertekelesek: (cel_tipus, cel_id) =>
-    req(`/ertekelesek/${encodeURIComponent(cel_tipus)}/${encodeURIComponent(cel_id)}`),
+    req(
+      `/ertekelesek?cel_tipus=${encodeURIComponent(cel_tipus)}&cel_id=${encodeURIComponent(cel_id)}`
+    ),
 
   sajatErtekelesek: () => req("/sajat/ertekelesek"),
 
@@ -109,7 +126,9 @@ export const api = {
     }),
 
   kepek: (cel_tipus, cel_id) =>
-    req(`/kepek/${encodeURIComponent(cel_tipus)}/${encodeURIComponent(cel_id)}`),
+    req(
+      `/kepek?cel_tipus=${encodeURIComponent(cel_tipus)}&cel_id=${encodeURIComponent(cel_id)}`
+    ),
 
   sajatKepek: () => req("/sajat/kepek"),
 
@@ -167,5 +186,56 @@ export const api = {
   deleteComment: (commentId) =>
     req(`/feed/comment/${commentId}`, {
       method: "DELETE"
+    }),
+
+  adminList: (tabla) =>
+    req(`/admin/${encodeURIComponent(tabla)}`),
+
+  adminJovahagyando: () =>
+    req("/admin/jovahagyando"),
+
+  adminCreate: (tabla, body) =>
+    req(`/admin/${encodeURIComponent(tabla)}`, {
+      method: "POST",
+      body
+    }),
+
+  adminUpdate: (tabla, id, body) =>
+    req(`/admin/${encodeURIComponent(tabla)}/${encodeURIComponent(id)}`, {
+      method: "PUT",
+      body
+    }),
+
+  adminDelete: (tabla, id) =>
+    req(`/admin/${encodeURIComponent(tabla)}/${encodeURIComponent(id)}`, {
+      method: "DELETE"
+    }),
+
+  adminElfogad: (tipus, id) =>
+    req("/admin/elfogad", {
+      method: "POST",
+      body: { tipus, id }
+    }),
+
+  adminElutasit: (tipus, id, indok) =>
+    req("/admin/elutasit", {
+      method: "POST",
+      body: { tipus, id, indok }
+    }),
+
+  adminResetPassword: (id, newPassword) =>
+    req(`/admin/felhasznalok/${encodeURIComponent(id)}/jelszo`, {
+      method: "PUT",
+      body: { newPassword }
+    }),
+
+  adminUploadUserProfileImage: (id, file) => {
+    const fd = new FormData()
+    fd.append("file", file)
+
+    return req(`/admin/felhasznalok/${encodeURIComponent(id)}/profilkep`, {
+      method: "POST",
+      body: fd
     })
+  }
 }

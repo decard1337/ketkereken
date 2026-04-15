@@ -1,5 +1,5 @@
 import { pool } from "../config/db.js"
-import { celLetezik, normalizalCelTipus, resolveCelTitle } from "../utils/celHelpers.js"
+import { celLetezik, normalizalCelTipus, resolveCelTitle } from "../utils/typeHelpers.js"
 import { createActivity } from "../utils/activityHelpers.js"
 
 export async function createOrUpdateRating(req, res) {

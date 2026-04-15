@@ -3,6 +3,7 @@ import { MapContainer, TileLayer, Marker, Polyline, useMap } from "react-leaflet
 import L from "leaflet"
 import { api } from "../lib/api"
 import "../styles/admin.css"
+import { formatDateForInput } from "../lib/date"
 
 const darkTiles = "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
 
@@ -646,7 +647,6 @@ export default function Admin() {
                   <i className="fa-solid fa-plus" style={{ marginRight: 10 }} />
                   Új hozzáadása
                 </div>
-                <div className="adm3-itemsub">Üres űrlap</div>
               </button>
             </div>
           </>
@@ -826,6 +826,13 @@ export default function Admin() {
                         value={form[k] ?? ""}
                         onChange={e => setField(k, e.target.value)}
                         rows={5}
+                      />
+                    ) : k === "datum" ? (
+                      <input
+                        type="date"
+                        className="adm3-input2"
+                        value={formatDateForInput(form[k])}
+                        onChange={e => setField(k, e.target.value)}
                       />
                     ) : (
                       <input
