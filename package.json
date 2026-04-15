@@ -9,10 +9,7 @@
     "dev": "concurrently \"npm run server\" \"npm run client\"",
     "build": "vite build",
     "preview": "vite preview",
-<<<<<<< HEAD
     "inditas": "node indito.js",
-=======
->>>>>>> d3fda18727ce8b2d98d799fc65d84bbb28bad97f
     "test:all": "node frontend/selenium_tests/auth.test.js && node frontend/selenium_tests/navigation.test.js && node frontend/selenium_tests/feed.test.js && node frontend/selenium_tests/profile.test.js && node frontend/selenium_tests/admin.test.js"
   },
   "dependencies": {

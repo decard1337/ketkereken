@@ -54,7 +54,6 @@ export const api = {
       method: "POST"
     }),
 
-<<<<<<< HEAD
   forgotPassword: (email) =>
     req("/auth/forgot-password", {
       method: "POST",
@@ -70,8 +69,6 @@ export const api = {
       body: { token, password }
     }),
 
-=======
->>>>>>> d3fda18727ce8b2d98d799fc65d84bbb28bad97f
   utvonalak: () => req("/utvonalak"),
   destinaciok: () => req("/destinaciok"),
   esemenyek: () => req("/esemenyek"),
@@ -105,13 +102,9 @@ export const api = {
     }),
 
   ertekelesek: (cel_tipus, cel_id) =>
-<<<<<<< HEAD
     req(
       `/ertekelesek?cel_tipus=${encodeURIComponent(cel_tipus)}&cel_id=${encodeURIComponent(cel_id)}`
     ),
-=======
-    req(`/ertekelesek/${encodeURIComponent(cel_tipus)}/${encodeURIComponent(cel_id)}`),
->>>>>>> d3fda18727ce8b2d98d799fc65d84bbb28bad97f
 
   sajatErtekelesek: () => req("/sajat/ertekelesek"),
 
@@ -133,13 +126,9 @@ export const api = {
     }),
 
   kepek: (cel_tipus, cel_id) =>
-<<<<<<< HEAD
     req(
       `/kepek?cel_tipus=${encodeURIComponent(cel_tipus)}&cel_id=${encodeURIComponent(cel_id)}`
     ),
-=======
-    req(`/kepek/${encodeURIComponent(cel_tipus)}/${encodeURIComponent(cel_id)}`),
->>>>>>> d3fda18727ce8b2d98d799fc65d84bbb28bad97f
 
   sajatKepek: () => req("/sajat/kepek"),
 
@@ -197,7 +186,6 @@ export const api = {
   deleteComment: (commentId) =>
     req(`/feed/comment/${commentId}`, {
       method: "DELETE"
-<<<<<<< HEAD
     }),
 
   adminList: (tabla) =>
@@ -250,7 +238,4 @@ export const api = {
       body: fd
     })
   }
-=======
-    })
->>>>>>> d3fda18727ce8b2d98d799fc65d84bbb28bad97f
 }

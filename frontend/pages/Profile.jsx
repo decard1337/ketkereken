@@ -3,10 +3,7 @@ import { Navigate, useParams } from "react-router-dom"
 import { api } from "../lib/api"
 import { useAuth } from "../lib/auth"
 import "../styles/profile.css"
-<<<<<<< HEAD
 import { formatShortDate } from "../lib/date"
-=======
->>>>>>> d3fda18727ce8b2d98d799fc65d84bbb28bad97f
 
 const REACTIONS = [
   { key: "heart", emoji: "❤️", label: "Tetszik" },
@@ -540,11 +537,7 @@ export default function Profile() {
     return {
       title: found.cim || found.nev || `${labelForType(cel_tipus)} #${cel_id}`,
       description: found.leiras || found.cim || "",
-<<<<<<< HEAD
       meta: found.hossz || formatShortDate(found.datum) || found.tipus || ""
-=======
-      meta: found.hossz || found.datum || found.tipus || ""
->>>>>>> d3fda18727ce8b2d98d799fc65d84bbb28bad97f
     }
   }
 
@@ -753,7 +746,6 @@ export default function Profile() {
               <span>Térkép</span>
             </a>
 
-<<<<<<< HEAD
             {user && (
               <a href="/feed" className="prf-btn ghost">
                 <i className="fa-solid fa-rss" />
@@ -761,8 +753,6 @@ export default function Profile() {
               </a>
             )}
 
-=======
->>>>>>> d3fda18727ce8b2d98d799fc65d84bbb28bad97f
             {user ? (
               <button className="prf-btn primary" onClick={logout}>
                 <i className="fa-solid fa-right-from-bracket" />

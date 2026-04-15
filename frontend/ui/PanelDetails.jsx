@@ -2,10 +2,7 @@ import { useEffect, useMemo, useState } from "react"
 import { createPortal } from "react-dom"
 import { api } from "../lib/api"
 import { useAuth } from "../lib/auth"
-<<<<<<< HEAD
 import { formatLongHuDate } from "../lib/date"
-=======
->>>>>>> d3fda18727ce8b2d98d799fc65d84bbb28bad97f
 
 function getCommunityType(type) {
   if (type === "utvonal") return "utvonalak"
@@ -24,18 +21,7 @@ function normalizeSelectedType(type) {
 }
 
 function formatDate(value) {
-<<<<<<< HEAD
   return formatLongHuDate(value)
-=======
-  if (!value) return "—"
-  const d = new Date(value)
-  if (Number.isNaN(d.getTime())) return value
-  return d.toLocaleDateString("hu-HU", {
-    year: "numeric",
-    month: "long",
-    day: "numeric"
-  })
->>>>>>> d3fda18727ce8b2d98d799fc65d84bbb28bad97f
 }
 
 function Lightbox({ images, index, onClose, onPrev, onNext }) {
