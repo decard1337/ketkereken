@@ -1,11 +1,7 @@
 import bcrypt from "bcryptjs"
 import { pool } from "../config/db.js"
 import { ADMIN_TABLES } from "../config/constants.js"
-<<<<<<< HEAD
 import { resolveCelTitle } from "../utils/typeHelpers.js"
-=======
-import { resolveCelTitle } from "../utils/celHelpers.js"
->>>>>>> d3fda18727ce8b2d98d799fc65d84bbb28bad97f
 
 function joTabla(tabla) {
   return Object.prototype.hasOwnProperty.call(ADMIN_TABLES, tabla)

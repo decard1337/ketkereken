@@ -1,5 +1,4 @@
 import bcrypt from "bcryptjs"
-<<<<<<< HEAD
 import crypto from "crypto"
 import { pool } from "../config/db.js"
 import { APP_BASE_URL, RESET_TOKEN_MINUTES } from "../config/env.js"
@@ -10,23 +9,13 @@ import { sendPasswordResetMail } from "../services/mailService.js"
 function normalizeEmail(email) {
   return String(email || "").trim().toLowerCase()
 }
-=======
-import { pool } from "../config/db.js"
-import { makeToken, setAuthCookie, clearAuthCookie } from "../utils/authHelpers.js"
-import { userToResponse } from "../utils/userHelpers.js"
->>>>>>> d3fda18727ce8b2d98d799fc65d84bbb28bad97f
 
 export async function register(req, res) {
   try {
     const { email, username, password } = req.body || {}
-<<<<<<< HEAD
     const normalizedEmail = normalizeEmail(email)
 
     if (!normalizedEmail || !username || !password) {
-=======
-
-    if (!email || !username || !password) {
->>>>>>> d3fda18727ce8b2d98d799fc65d84bbb28bad97f
       return res.status(400).json({ error: "Hiányzó mezők" })
     }
 
@@ -35,13 +24,8 @@ export async function register(req, res) {
     }
 
     const [emailRows] = await pool.query(
-<<<<<<< HEAD
       "SELECT id FROM felhasznalok WHERE LOWER(email)=? LIMIT 1",
       [normalizedEmail]
-=======
-      "SELECT id FROM felhasznalok WHERE email=? LIMIT 1",
-      [email]
->>>>>>> d3fda18727ce8b2d98d799fc65d84bbb28bad97f
     )
 
     if (emailRows.length) {
@@ -61,20 +45,12 @@ export async function register(req, res) {
 
     const [result] = await pool.query(
       "INSERT INTO felhasznalok (email, felhasznalonev, jelszo_hash, rang) VALUES (?,?,?, 'felhasznalo')",
-<<<<<<< HEAD
       [normalizedEmail, username, passwordHash]
-=======
-      [email, username, passwordHash]
->>>>>>> d3fda18727ce8b2d98d799fc65d84bbb28bad97f
     )
 
     const tokenUser = {
       id: result.insertId,
-<<<<<<< HEAD
       email: normalizedEmail,
-=======
-      email,
->>>>>>> d3fda18727ce8b2d98d799fc65d84bbb28bad97f
       username,
       role: "felhasznalo",
       profilkep: null,
@@ -87,11 +63,7 @@ export async function register(req, res) {
     res.json({
       user: {
         id: result.insertId,
-<<<<<<< HEAD
         email: normalizedEmail,
-=======
-        email,
->>>>>>> d3fda18727ce8b2d98d799fc65d84bbb28bad97f
         username,
         role: "felhasznalo",
         profilkep: null,
@@ -108,25 +80,15 @@ export async function register(req, res) {
 export async function login(req, res) {
   try {
     const { email, password } = req.body || {}
-<<<<<<< HEAD
     const normalizedEmail = normalizeEmail(email)
 
     if (!normalizedEmail || !password) {
-=======
-
-    if (!email || !password) {
->>>>>>> d3fda18727ce8b2d98d799fc65d84bbb28bad97f
       return res.status(400).json({ error: "Hiányzó mezők" })
     }
 
     const [rows] = await pool.query(
-<<<<<<< HEAD
       "SELECT id, email, felhasznalonev, jelszo_hash, rang, profilkep, bio, letrehozva FROM felhasznalok WHERE LOWER(email)=? LIMIT 1",
       [normalizedEmail]
-=======
-      "SELECT id, email, felhasznalonev, jelszo_hash, rang, profilkep, bio, letrehozva FROM felhasznalok WHERE email=? LIMIT 1",
-      [email]
->>>>>>> d3fda18727ce8b2d98d799fc65d84bbb28bad97f
     )
 
     const user = rows[0]
@@ -179,7 +141,6 @@ export async function me(req, res) {
     res.status(500).json({ error: "Felhasználó lekérdezési hiba" })
   }
 }
-<<<<<<< HEAD
 
 export async function requestPasswordReset(req, res) {
   try {
@@ -297,5 +258,3 @@ export async function resetPassword(req, res) {
     res.status(500).json({ error: "Jelszó módosítási hiba" })
   }
 }
-=======
->>>>>>> d3fda18727ce8b2d98d799fc65d84bbb28bad97f
