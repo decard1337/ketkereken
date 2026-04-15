@@ -39,6 +39,14 @@ Az alkalmazás felhasználói és admin oldallal is rendelkezik, így nemcsak b�
 
 ---
 
+## Teszt felhasználó
+
+```bash
+E-mail: teszt@teszt.hu
+Jelszó: teszt123
+```
+---
+
 ## Fő funkciók
 
 ### Interaktív térkép
